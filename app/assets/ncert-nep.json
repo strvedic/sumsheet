@@ -1,0 +1,257 @@
+{
+  "schema_version": "1.0",
+  "board": "NCERT",
+  "edition": "nep-2023-26",
+  "compiled": "2026-08-07",
+  "source": "NCERT textbook Contents pages and chapter section headings, Reprint 2026-27 printings",
+  "note": "A board overlay on top of skill-map.json. This file maps NCERT chapters to skill ids; it never defines skills and never overrides ability levels. The app must not use this to decide what a student sees - it is for onboarding hints, worksheet page titles and coverage audits only. 'gap' marks a chapter whose content has no matching skill in skill-map.json; see GAPS.md.",
+  "classes": [
+    {
+      "class": "1",
+      "book": "Joyful Mathematics",
+      "first_edition": 2023,
+      "chapters": [
+        { "no": 1, "title": "Finding the Furry Cat!", "topic": "Pre-number Concepts", "skills": ["compare-more-less", "before-after-between", "count-1-10"] },
+        { "no": 2, "title": "What is Long? What is Round?", "topic": "Shapes", "skills": ["shapes-2d", "shapes-3d"] },
+        { "no": 3, "title": "Mango Treat", "topic": "Numbers 1 to 9", "skills": ["digit-recognise", "count-1-10"] },
+        { "no": 4, "title": "Making 10", "topic": "Numbers 10 to 20", "skills": ["count-1-20", "add-within-10"], "gap": "number-bonds" },
+        { "no": 5, "title": "How Many?", "topic": "Addition and Subtraction of Single Digit Numbers", "skills": ["add-within-10", "sub-within-10"] },
+        { "no": 6, "title": "Vegetable Farm", "topic": "Addition and Subtraction up to 20", "skills": ["add-within-20", "sub-within-20"] },
+        { "no": 7, "title": "Lina's Family", "topic": "Measurement", "skills": ["measure-units"] },
+        { "no": 8, "title": "Fun with Numbers", "topic": "Numbers 21 to 99", "skills": ["count-1-100", "place-value-tens"] },
+        { "no": 9, "title": "Utsav", "topic": "Patterns", "skills": ["patterns"], "gap": "patterns-entry-level" },
+        { "no": 10, "title": "How do I Spend my Day?", "topic": "Time", "skills": ["time-clock"] },
+        { "no": 11, "title": "How Many Times?", "topic": "Multiplication", "skills": ["mult-as-repeated-add"] },
+        { "no": 12, "title": "How Much Can We Spend?", "topic": "Money", "skills": ["money"] },
+        { "no": 13, "title": "So Many Toys", "topic": "Data Handling", "skills": ["data-pictograph"] }
+      ]
+    },
+    {
+      "class": "2",
+      "book": "Joyful Mathematics",
+      "first_edition": 2023,
+      "chapters": [
+        { "no": 1, "title": "A Day at the Beach", "topic": "Counting in Groups", "skills": ["skip-count", "count-1-100"] },
+        { "no": 2, "title": "Shapes Around Us", "topic": "3D Shapes", "skills": ["shapes-3d"] },
+        { "no": 3, "title": "Fun with Numbers", "topic": "Numbers 1 to 100", "skills": ["count-1-100", "place-value-tens", "compare-order-numbers"] },
+        { "no": 4, "title": "Shadow Story (Togalu)", "topic": "2D Shapes", "skills": ["shapes-2d"] },
+        { "no": 5, "title": "Playing with Lines", "topic": "Orientations of a line", "skills": ["lines-rays"], "gap": "line-orientation" },
+        { "no": 6, "title": "Decoration for Festival", "topic": "Addition and Subtraction", "skills": ["add-2digit-nocarry", "add-2digit-carry", "sub-2digit-noborrow", "sub-2digit-borrow"] },
+        { "no": 7, "title": "Rani's Gift", "topic": "Measurement", "skills": ["measure-units"] },
+        { "no": 8, "title": "Grouping and Sharing", "topic": "Multiplication and Division", "skills": ["mult-as-repeated-add", "tables-2-5-10", "div-concept"] },
+        { "no": 9, "title": "Which Season is it?", "topic": "Measurement of Time", "skills": ["time-clock", "time-calc"] },
+        { "no": 10, "title": "Fun at the Fair", "topic": "Money", "skills": ["money"] },
+        { "no": 11, "title": "Data Handling", "topic": "Data Handling", "skills": ["data-pictograph"] }
+      ]
+    },
+    {
+      "class": "3",
+      "book": "Maths Mela",
+      "first_edition": 2024,
+      "note": "Chapter titles are story names. Topics below were read from the chapter PDFs, not inferred from titles.",
+      "chapters": [
+        { "no": 1, "title": "What's in a Name?", "topic": "Tally marks and one-to-one correspondence", "skills": ["data-pictograph", "count-1-100"] },
+        { "no": 2, "title": "Toy Joy", "topic": "3D shapes - faces, edges, corners", "skills": ["shapes-3d"] },
+        { "no": 3, "title": "Double Century", "topic": "Numbers to 200, place value, estimation", "skills": ["count-1-100", "place-value-hundreds", "compare-order-numbers"], "gap": "estimate-quantity" },
+        { "no": 4, "title": "Vacation with My Nani Maa", "topic": "Number bonds and missing addend", "skills": ["add-within-20", "sub-within-20"], "gap": "number-bonds" },
+        { "no": 5, "title": "Fun with Shapes", "topic": "2D shapes, straight and curved lines", "skills": ["shapes-2d", "lines-rays"] },
+        { "no": 6, "title": "House of Hundreds - I", "topic": "Counting and place value beyond 200", "skills": ["place-value-hundreds", "compare-order-numbers"] },
+        { "no": 7, "title": "Raksha Bandhan", "topic": "Addition and multiplication as equal groups", "skills": ["addsub-3digit", "mult-as-repeated-add", "tables-2-5-10", "money"] },
+        { "no": 8, "title": "Fair Share", "topic": "Fractions - halves, quarters, thirds", "skills": ["fraction-concept", "fraction-halves-quarters"] },
+        { "no": 9, "title": "House of Hundreds - II", "topic": "3-digit place value, addition and subtraction", "skills": ["place-value-hundreds", "addsub-3digit"] },
+        { "no": 10, "title": "Fun at Class Party!", "topic": "Length measurement", "skills": ["measure-units"] },
+        { "no": 11, "title": "Filling and Lifting", "topic": "Weight and capacity", "skills": ["measure-units"] },
+        { "no": 12, "title": "Give and Take", "topic": "3-digit column addition and subtraction", "skills": ["addsub-3digit", "money"] },
+        { "no": 13, "title": "Time Goes On", "topic": "Clock and calendar", "skills": ["time-clock", "time-calc"] },
+        { "no": 14, "title": "The Surajkund Fair", "topic": "Patterns, symmetry, fractions - mixed revision", "skills": ["patterns", "symmetry", "fraction-concept"] }
+      ]
+    },
+    {
+      "class": "4",
+      "book": "Maths Mela",
+      "first_edition": 2025,
+      "note": "Chapter titles are story names. Topics below were read from the chapter PDFs.",
+      "chapters": [
+        { "no": 1, "title": "Shapes Around Us", "topic": "2D and 3D shapes, angles", "skills": ["shapes-2d", "shapes-3d", "angles-types"] },
+        { "no": 2, "title": "Hide and Seek", "topic": "Spatial views - top, side, front", "skills": [], "gap": "spatial-views" },
+        { "no": 3, "title": "Pattern Around Us", "topic": "Patterns", "skills": ["patterns"] },
+        { "no": 4, "title": "Thousands Around Us", "topic": "Place value to thousands", "skills": ["place-value-hundreds", "large-numbers", "addsub-3digit"] },
+        { "no": 5, "title": "Sharing and Measuring", "topic": "Fractions and division", "skills": ["fraction-concept", "fraction-halves-quarters", "div-concept"] },
+        { "no": 6, "title": "Measuring Length", "topic": "Length", "skills": ["measure-units"] },
+        { "no": 7, "title": "The Cleanest Village", "topic": "Money, addition and subtraction", "skills": ["money", "addsub-wordproblem"] },
+        { "no": 8, "title": "Weigh it, Pour it", "topic": "Weight and capacity", "skills": ["measure-units"] },
+        { "no": 9, "title": "Equal Groups", "topic": "Multiplication and division", "skills": ["tables-3-4-6", "tables-7-8-9", "mult-2by1", "div-facts"] },
+        { "no": 10, "title": "Elephants, Tigers, and Leopards", "topic": "Large-number addition and subtraction", "skills": ["addsub-3digit", "addsub-wordproblem"] },
+        { "no": 11, "title": "Fun with Symmetry", "topic": "Symmetry", "skills": ["symmetry"] },
+        { "no": 12, "title": "Ticking Clocks and Turning Calendar", "topic": "Time and calendar", "skills": ["time-calc"] },
+        { "no": 13, "title": "The Transport Museum", "topic": "Tables, products, factor puzzles", "skills": ["tables-to-20", "mult-2by1", "factors", "multiples"] },
+        { "no": 14, "title": "Data Handling", "topic": "Tables and pictographs", "skills": ["data-pictograph", "data-bargraph"] }
+      ]
+    },
+    {
+      "class": "5",
+      "book": "Maths Mela",
+      "first_edition": 2025,
+      "note": "Chapter titles are story names. Topics below were read from the chapter PDFs.",
+      "chapters": [
+        { "no": 1, "title": "We the Travellers - I", "topic": "Large numbers and place value", "skills": ["large-numbers", "compare-order-numbers", "money"] },
+        { "no": 2, "title": "Fractions", "topic": "Fractions", "skills": ["fraction-compare-like", "fraction-equivalent", "fraction-mixed"] },
+        { "no": 3, "title": "Angles as Turns", "topic": "Angles as turns, clockwise", "skills": ["angles-types"] },
+        { "no": 4, "title": "We the Travellers - II", "topic": "Addition and subtraction strategies", "skills": ["addsub-wordproblem", "rounding"] },
+        { "no": 5, "title": "Far and Near", "topic": "Length and distance", "skills": ["measure-units"] },
+        { "no": 6, "title": "The Dairy Farm", "topic": "Multiplication, multiples, factors", "skills": ["mult-2by2", "factors", "multiples", "even-odd"] },
+        { "no": 7, "title": "Shapes and Patterns", "topic": "2D shapes, angles, patterns", "skills": ["shapes-2d", "patterns", "angles-types"] },
+        { "no": 8, "title": "Weight and Capacity", "topic": "Weight and capacity", "skills": ["measure-units"] },
+        { "no": 9, "title": "Coconut Farm", "topic": "Division - dividend, divisor, quotient", "skills": ["div-facts", "div-remainder", "long-division"] },
+        { "no": 10, "title": "Symmetrical Designs", "topic": "Symmetry", "skills": ["symmetry"] },
+        { "no": 11, "title": "Grandmother's Quilt", "topic": "Shapes, tiling, area", "skills": ["shapes-2d", "area-rect", "perimeter"], "gap": "tiling" },
+        { "no": 12, "title": "Racing Seconds", "topic": "Time", "skills": ["time-calc"] },
+        { "no": 13, "title": "Animal Jumps", "topic": "Multiples and factors", "skills": ["multiples", "factors", "tables-to-20"] },
+        { "no": 14, "title": "Maps and Locations", "topic": "Maps, direction, location", "skills": [], "gap": "maps-location" },
+        { "no": 15, "title": "Data Through Pictures", "topic": "Pictographs", "skills": ["data-pictograph", "data-bargraph"] }
+      ]
+    },
+    {
+      "class": "6",
+      "book": "Ganita Prakash",
+      "first_edition": 2024,
+      "chapters": [
+        { "no": 1, "title": "Patterns in Mathematics", "topic": "Number sequences and shape patterns", "skills": ["patterns"] },
+        { "no": 2, "title": "Lines and Angles", "topic": "Point, segment, ray, angle, measuring and drawing angles", "skills": ["lines-rays", "angles-types"] },
+        { "no": 3, "title": "Number Play", "topic": "Supercells, digit play, palindromes, Kaprekar, estimation", "skills": ["patterns", "rounding", "large-numbers"] },
+        { "no": 4, "title": "Data Handling and Presentation", "topic": "Collecting data, pictographs, bar graphs", "skills": ["data-pictograph", "data-bargraph"] },
+        { "no": 5, "title": "Prime Time", "topic": "Primes, co-primes, prime factorisation, divisibility", "skills": ["prime-composite", "prime-factorisation", "divisibility-rules", "factors", "multiples"], "gap": "co-primes" },
+        { "no": 6, "title": "Perimeter and Area", "topic": "Perimeter, area, area of a triangle", "skills": ["perimeter", "area-rect", "area-triangle"] },
+        { "no": 7, "title": "Fractions", "topic": "Fractional units, number line, mixed, equivalent, add and subtract", "skills": ["fraction-equivalent", "fraction-mixed", "fraction-compare-unlike", "fraction-addsub-like", "fraction-addsub-unlike"] },
+        { "no": 8, "title": "Playing with Constructions", "topic": "Constructing squares and rectangles, diagonals", "skills": ["constructions"] },
+        { "no": 9, "title": "Symmetry", "topic": "Line symmetry and rotational symmetry", "skills": ["symmetry"] },
+        { "no": 10, "title": "The Other Side of Zero", "topic": "Integers via the token model", "skills": ["integer-concept", "integer-addsub"] }
+      ]
+    },
+    {
+      "class": "7",
+      "book": "Ganita Prakash",
+      "first_edition": 2025,
+      "parts": 2,
+      "chapters": [
+        { "no": 1, "part": 1, "title": "Large Numbers Around Us", "topic": "Lakh and crore, exact vs approximate", "skills": ["large-numbers", "rounding"] },
+        { "no": 2, "part": 1, "title": "Arithmetic Expressions", "topic": "Reading and evaluating expressions", "skills": ["bodmas"] },
+        { "no": 3, "part": 1, "title": "A Peek Beyond the Point", "topic": "Decimal place value, comparing, add and subtract", "skills": ["decimal-place-value", "decimal-compare", "decimal-addsub", "measure-units"] },
+        { "no": 4, "part": 1, "title": "Expressions using Letter-Numbers", "topic": "Letter-numbers, simplifying algebraic expressions", "skills": ["algebra-variables", "algebra-like-terms", "patterns"] },
+        { "no": 5, "part": 1, "title": "Parallel and Intersecting Lines", "topic": "Transversals, corresponding and alternate angles", "skills": ["parallel-lines", "angle-pairs"] },
+        { "no": 6, "part": 1, "title": "Number Play", "topic": "Parity, magic squares, Virahanka-Fibonacci numbers", "skills": ["even-odd", "patterns"] },
+        { "no": 7, "part": 1, "title": "A Tale of Three Intersecting Lines", "topic": "Triangle construction, altitudes, types", "skills": ["constructions", "triangle-properties"] },
+        { "no": 8, "part": 1, "title": "Working with Fractions", "topic": "Multiplication and division of fractions", "skills": ["fraction-multiply", "fraction-divide"] },
+        { "no": 1, "part": 2, "title": "Geometric Twins", "topic": "Congruence of triangles, isosceles and equilateral angles", "skills": ["triangle-congruence", "triangle-properties"] },
+        { "no": 2, "part": 2, "title": "Operations with Integers", "topic": "Multiplication of integers", "skills": ["integer-muldiv"] },
+        { "no": 3, "part": 2, "title": "Finding Common Ground", "topic": "HCF, LCM, prime factorisation", "skills": ["hcf", "lcm", "prime-factorisation"] },
+        { "no": 4, "part": 2, "title": "Another Peek Beyond the Point", "topic": "Decimal multiplication and division, unit conversion", "skills": ["decimal-multiply", "decimal-divide", "measure-units"] },
+        { "no": 5, "part": 2, "title": "Connecting the Dots", "topic": "Representative values (mean, median, mode), visualising data", "skills": ["mean-median-mode", "data-bargraph"] },
+        { "no": 6, "part": 2, "title": "Constructions and Tilings", "topic": "Geometric constructions and tiling", "skills": ["constructions", "symmetry"], "gap": "tiling" },
+        { "no": 7, "part": 2, "title": "Finding the Unknown", "topic": "Solving equations systematically", "skills": ["linear-eq-onestep", "linear-eq-multistep"] }
+      ]
+    },
+    {
+      "class": "8",
+      "book": "Ganita Prakash",
+      "first_edition": 2025,
+      "parts": 2,
+      "chapters": [
+        { "no": 1, "part": 1, "title": "A Square and A Cube", "topic": "Square numbers, square roots, cubes, cube roots", "skills": ["squares-roots", "cubes-roots"] },
+        { "no": 2, "part": 1, "title": "Power Play", "topic": "Exponential notation, negative powers, powers of 10", "skills": ["exponents"] },
+        { "no": 3, "part": 1, "title": "A Story of Numbers", "topic": "Early number systems, the idea of a base, place value representation", "skills": [], "gap": "number-bases" },
+        { "no": 4, "part": 1, "title": "Quadrilaterals", "topic": "Angles in quadrilaterals, parallelogram, rhombus, kite, trapezium", "skills": ["quadrilaterals", "angle-pairs"] },
+        { "no": 5, "part": 1, "title": "Number Play", "topic": "Multiples, divisibility shortcuts for 3, 9, 11, digital roots", "skills": ["divisibility-rules", "multiples"] },
+        { "no": 6, "part": 1, "title": "We Distribute, Yet Things Multiply", "topic": "Properties of multiplication, distributive property", "skills": ["algebra-like-terms", "algebra-identities"] },
+        { "no": 7, "part": 1, "title": "Proportional Reasoning-1", "topic": "Ratios, simplest form, sharing unequally, unit conversion", "skills": ["ratio-basics", "ratio-equivalent", "proportion-unitary"] },
+        { "no": 1, "part": 2, "title": "Fractions in Disguise", "topic": "Percentages - of a quantity, increase and decrease, taxes, compounding", "skills": ["percentage-basics", "percentage-of-quantity", "percentage-change", "discount-tax", "compound-interest"] },
+        { "no": 2, "part": 2, "title": "The Baudhayana-Pythagoras Theorem", "topic": "Hypotenuse, Pythagorean triples", "skills": ["pythagoras"] },
+        { "no": 3, "part": 2, "title": "Proportional Reasoning-2", "topic": "Ratios in maps and scale, dividing in a ratio, inverse proportion", "skills": ["ratio-equivalent", "proportion-unitary"], "gap": "inverse-proportion" },
+        { "no": 4, "part": 2, "title": "Exploring Some Geometric Themes", "topic": "Fractals, visualising solids, isometric projections", "skills": [], "gap": "spatial-views" },
+        { "no": 5, "part": 2, "title": "Tales by Dots and Lines", "topic": "Visualising and interpreting data", "skills": ["mean-median-mode", "data-bargraph", "data-piechart"] },
+        { "no": 6, "part": 2, "title": "Algebra Play", "topic": "Think-of-a-number tricks, number pyramids, algebra grids", "skills": ["algebra-substitute", "algebra-variables"] },
+        { "no": 7, "part": 2, "title": "Area", "topic": "Area of rectangles and squares", "skills": ["area-rect", "area-triangle"] }
+      ]
+    },
+    {
+      "class": "9",
+      "book": "Mathematics (NCFSE)",
+      "first_edition": 2025,
+      "note": "New 8-chapter book. See GAPS.md - it does not cover several topics the current Class 10 book assumes.",
+      "chapters": [
+        { "no": 1, "title": "Orienting Yourself: The Use of Coordinates", "topic": "2-D Cartesian system, distance between two points", "skills": ["coordinate-basics", "distance-section"] },
+        { "no": 2, "title": "Introduction to Linear Polynomials", "topic": "Linear patterns, growth and decay, linear relationships", "skills": ["polynomials", "linear-eq-two-var", "straight-line"] },
+        { "no": 3, "title": "The World of Numbers", "topic": "Zero, integers, rationals, irrationals, real numbers, cyclic decimals", "skills": ["integer-concept", "rational-numbers", "real-numbers"] },
+        { "no": 4, "title": "Exploring Algebraic Identities", "topic": "Visualising identities, factorisation, rational expressions", "skills": ["algebra-identities", "factorisation"] },
+        { "no": 5, "title": "I'm Up and Down, and Round and Round", "topic": "Circles - chords, angles subtended by an arc, concyclicity", "skills": ["circle-basics", "circle-theorems"] },
+        { "no": 6, "title": "Measuring Space: Perimeter and Area", "topic": "Perimeter of a circle, arc length, area of plane figures", "skills": ["perimeter", "area-rect", "area-triangle", "circle-area"] },
+        { "no": 7, "title": "The Mathematics of Maybe: Introduction to Probability", "topic": "Sample spaces, tree diagrams", "skills": ["probability-basic"] },
+        { "no": 8, "title": "Predicting What Comes Next: Exploring Sequences and Progressions", "topic": "Explicit and recursive rules, AP, sum of n terms, GP", "skills": ["patterns", "arithmetic-progression", "geometric-progression"] }
+      ]
+    },
+    {
+      "class": "10",
+      "book": "Mathematics",
+      "first_edition": 2023,
+      "note": "Pre-NEP rationalised book, still in print for 2026-27.",
+      "chapters": [
+        { "no": 1, "title": "Real Numbers", "topic": "Fundamental theorem of arithmetic, irrationals", "skills": ["real-numbers", "prime-factorisation", "hcf", "lcm"] },
+        { "no": 2, "title": "Polynomials", "topic": "Zeroes and coefficients", "skills": ["polynomials", "factorisation"] },
+        { "no": 3, "title": "Pair of Linear Equations in Two Variables", "topic": "Graphical, substitution and elimination methods", "skills": ["linear-eq-two-var", "simultaneous-eq"] },
+        { "no": 4, "title": "Quadratic Equations", "topic": "Factorisation, nature of roots", "skills": ["quadratic-factorise", "quadratic-formula"] },
+        { "no": 5, "title": "Arithmetic Progressions", "topic": "nth term, sum of first n terms", "skills": ["arithmetic-progression"] },
+        { "no": 6, "title": "Triangles", "topic": "Similar figures, criteria for similarity", "skills": ["triangle-similarity", "triangle-properties"] },
+        { "no": 7, "title": "Coordinate Geometry", "topic": "Distance formula, section formula", "skills": ["coordinate-basics", "distance-section"] },
+        { "no": 8, "title": "Introduction to Trigonometry", "topic": "Trig ratios, standard angles, identities", "skills": ["trig-ratios", "trig-standard-angles", "trig-identities"] },
+        { "no": 9, "title": "Some Applications of Trigonometry", "topic": "Heights and distances", "skills": ["heights-distances"] },
+        { "no": 10, "title": "Circles", "topic": "Tangent to a circle, number of tangents", "skills": ["circle-theorems"] },
+        { "no": 11, "title": "Areas Related to Circles", "topic": "Sector and segment", "skills": ["circle-area"] },
+        { "no": 12, "title": "Surface Areas and Volumes", "topic": "Combination of solids", "skills": ["solids-advanced", "surface-area-cuboid", "volume-cuboid"] },
+        { "no": 13, "title": "Statistics", "topic": "Mean, mode and median of grouped data", "skills": ["grouped-data", "mean-median-mode"] },
+        { "no": 14, "title": "Probability", "topic": "Theoretical probability", "skills": ["probability-basic"] }
+      ]
+    },
+    {
+      "class": "11",
+      "book": "Mathematics",
+      "first_edition": 2023,
+      "chapters": [
+        { "no": 1, "title": "Sets", "topic": "Set representations, Venn diagrams, operations", "skills": ["sets"] },
+        { "no": 2, "title": "Relations and Functions", "topic": "Cartesian product, relations, functions", "skills": ["relations-functions"] },
+        { "no": 3, "title": "Trigonometric Functions", "topic": "Angles, trig functions, sum and difference formulas", "skills": ["trig-identities", "trig-equations"] },
+        { "no": 4, "title": "Complex Numbers and Quadratic Equations", "topic": "Algebra of complex numbers, modulus, Argand plane", "skills": ["complex-numbers", "quadratic-formula"] },
+        { "no": 5, "title": "Linear Inequalities", "topic": "Algebraic and graphical solutions", "skills": ["inequalities"] },
+        { "no": 6, "title": "Permutations and Combinations", "topic": "Fundamental principle of counting", "skills": ["permutation-combination"] },
+        { "no": 7, "title": "Binomial Theorem", "topic": "Positive integral indices", "skills": ["binomial-theorem"] },
+        { "no": 8, "title": "Sequences and Series", "topic": "GP, relationship between AM and GM", "skills": ["geometric-progression", "arithmetic-progression"] },
+        { "no": 9, "title": "Straight Lines", "topic": "Slope, forms of the equation, distance of a point from a line", "skills": ["straight-line"] },
+        { "no": 10, "title": "Conic Sections", "topic": "Circle, parabola, ellipse, hyperbola", "skills": [], "gap": "conic-sections" },
+        { "no": 11, "title": "Introduction to Three Dimensional Geometry", "topic": "Coordinate planes, distance between two points", "skills": ["three-d-geometry"] },
+        { "no": 12, "title": "Limits and Derivatives", "topic": "Limits, limits of trig functions, derivatives", "skills": ["limits", "derivatives"] },
+        { "no": 13, "title": "Statistics", "topic": "Measures of dispersion, mean deviation, variance", "skills": ["standard-deviation", "grouped-data"] },
+        { "no": 14, "title": "Probability", "topic": "Axiomatic approach", "skills": ["probability-events", "probability-basic"] }
+      ]
+    },
+    {
+      "class": "12",
+      "book": "Mathematics",
+      "first_edition": 2023,
+      "parts": 2,
+      "chapters": [
+        { "no": 1, "part": 1, "title": "Relations and Functions", "topic": "Types of relations and functions, composition, invertible", "skills": ["relations-functions"] },
+        { "no": 2, "part": 1, "title": "Inverse Trigonometric Functions", "topic": "Basic concepts and properties", "skills": [], "gap": "inverse-trig" },
+        { "no": 3, "part": 1, "title": "Matrices", "topic": "Types, operations, transpose, invertible matrices", "skills": ["matrices"] },
+        { "no": 4, "part": 1, "title": "Determinants", "topic": "Minors, cofactors, adjoint and inverse", "skills": ["determinants"] },
+        { "no": 5, "part": 1, "title": "Continuity and Differentiability", "topic": "Continuity, logarithmic differentiation, second order derivative", "skills": ["derivatives", "limits"] },
+        { "no": 6, "part": 1, "title": "Application of Derivatives", "topic": "Rate of change, increasing and decreasing, maxima and minima", "skills": ["derivative-applications"] },
+        { "no": 7, "part": 2, "title": "Integrals", "topic": "Methods of integration, partial fractions, by parts, definite integrals", "skills": ["integration", "definite-integrals"] },
+        { "no": 8, "part": 2, "title": "Application of Integrals", "topic": "Area under simple curves", "skills": ["definite-integrals"] },
+        { "no": 9, "part": 2, "title": "Differential Equations", "topic": "General and particular solutions, first order first degree", "skills": ["differential-equations"] },
+        { "no": 10, "part": 2, "title": "Vector Algebra", "topic": "Types of vectors, addition, product of two vectors", "skills": ["vectors"] },
+        { "no": 11, "part": 2, "title": "Three Dimensional Geometry", "topic": "Direction cosines, equation of a line, shortest distance", "skills": ["three-d-geometry"] },
+        { "no": 12, "part": 2, "title": "Linear Programming", "topic": "LPP and its mathematical formulation", "skills": ["linear-programming"] },
+        { "no": 13, "part": 2, "title": "Probability", "topic": "Conditional probability, independence, Bayes' theorem", "skills": ["probability-events"] }
+      ]
+    }
+  ]
+}

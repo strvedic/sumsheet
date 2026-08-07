@@ -284,7 +284,27 @@ than of counting.
 already true before this change. Added `_a()`, and a scan over every generator
 at every difficulty confirms nothing now writes "a" before a vowel.
 
-## 11. Removed, not ported
+## 11. Counting objects vanished again on a mixed sheet
+
+`lib/src/worksheet.dart`
+
+The counting layout only runs when **every** question on the sheet is a
+counting one. Class 1 chapter 3 is digit recognition and counting together, so
+it took the ordinary card layout - and the U+25CF objects went straight back to
+being dropped by the font, silently, exactly as before.
+
+Found by an app test that builds a sheet for every chapter the form offers; the
+PDF library logged `Unable to find a font to draw "●"` while the sheet built
+happily.
+
+An answer card now draws the objects itself when its question is a counting
+one, so a counting question is safe wherever it lands. The all-or-nothing
+layout choice stays, but nothing depends on it for correctness any more.
+
+The lesson worth porting with it: a layout rule that decides how something is
+drawn must not also decide whether it is drawn at all.
+
+## 12. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

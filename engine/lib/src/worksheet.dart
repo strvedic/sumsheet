@@ -551,6 +551,23 @@ class WorksheetBuilder {
     ];
   }
 
+  /// The objects to be counted, drawn rather than typeset.
+  pw.Widget _dots(int count) => pw.Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: [
+          for (var n = 0; n < count; n++)
+            pw.Container(
+              width: 13,
+              height: 13,
+              decoration: const pw.BoxDecoration(
+                color: _rule,
+                shape: pw.BoxShape.circle,
+              ),
+            ),
+        ],
+      );
+
   /// Every question as a counting picture, or null if any of them is not one.
   List<PictureCount>? get _asPictureCounts {
     final out = <PictureCount>[];
@@ -588,21 +605,7 @@ class WorksheetBuilder {
             pw.Text(pdfSafe(p.question),
                 style: const pw.TextStyle(fontSize: 10.5)),
             pw.SizedBox(height: 9),
-            pw.Wrap(
-              spacing: 7,
-              runSpacing: 7,
-              children: [
-                for (var n = 0; n < p.count; n++)
-                  pw.Container(
-                    width: 13,
-                    height: 13,
-                    decoration: const pw.BoxDecoration(
-                      color: _rule,
-                      shape: pw.BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
+            _dots(p.count),
             pw.SizedBox(height: 11),
             pw.Row(
               children: [
@@ -682,7 +685,9 @@ class WorksheetBuilder {
         questions.map((q) => q.prompt.length).reduce((a, b) => a > b ? a : b);
     final perRow = longest > 150 ? 1 : 2;
 
-    pw.Widget card(int i) => pw.Container(
+    pw.Widget card(int i) {
+      final picture = PictureCount.tryParse(questions[i]);
+      return pw.Container(
           padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 8),
           decoration: pw.BoxDecoration(
             border: pw.Border.all(color: _cardEdge, width: 0.8),
@@ -706,9 +711,24 @@ class WorksheetBuilder {
                     ),
                   ),
                   pw.Expanded(
-                    child: pw.Text(
-                      pdfSafe(questions[i].prompt),
-                      style: const pw.TextStyle(fontSize: 11, lineSpacing: 2),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        // A counting question keeps its objects in the prompt
+                        // as U+25CF, which this font cannot draw. On a sheet
+                        // that is nothing but counting they get their own
+                        // layout; on a mixed one they would silently vanish,
+                        // so draw them here too.
+                        pw.Text(
+                          pdfSafe(picture?.question ?? questions[i].prompt),
+                          style:
+                              const pw.TextStyle(fontSize: 11, lineSpacing: 2),
+                        ),
+                        if (picture != null) ...[
+                          pw.SizedBox(height: 8),
+                          _dots(picture.count),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -725,7 +745,8 @@ class WorksheetBuilder {
               ),
             ],
           ),
-        );
+      );
+    }
 
     return [
       for (var i = 0; i < questions.length; i += perRow)

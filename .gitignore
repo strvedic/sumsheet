@@ -30,3 +30,6 @@ secrets.*
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Flutter web build output. Deployed from CI or by hand; not source.
+app/build/
