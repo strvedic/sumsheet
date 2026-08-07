@@ -14,33 +14,144 @@ void registerGeometry() {
       'triangle': 3, 'square': 4, 'rectangle': 4, 'pentagon': 5,
       'hexagon': 6, 'heptagon': 7, 'octagon': 8,
     };
-    final name = c.pick(sides.keys.toList());
-    final n = sides[name]!;
-    return Question(
-      skillId: c.skillId,
-      prompt: 'How many sides does this $name have?',
-      answer: '$n',
-      difficulty: c.difficulty,
-      // Shown, not just named. A child who has never seen a heptagon cannot
-      // answer this from the word alone - and the word is what we are teaching.
-      diagram: name == 'rectangle' ? 'polygon:rect' : 'polygon:$n',
-      choices: c.choicesAround(n, distractors: [n - 1, n + 1, n + 2]),
-      steps: ['Count the straight edges around the outside.', 'A $name has $n sides.'],
-    );
+    String diagramFor(String name) =>
+        name == 'rectangle' ? 'polygon:rect' : 'polygon:${sides[name]}';
+
+    switch (c.int_(0, 3)) {
+      case 0:
+        final name = c.pick(sides.keys.toList());
+        final n = sides[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many sides does this $name have?',
+          answer: '$n',
+          difficulty: c.difficulty,
+          // Shown, not just named. A child who has never seen a heptagon
+          // cannot answer from the word alone - and the word is what we are
+          // teaching.
+          diagram: diagramFor(name),
+          choices: c.choicesAround(n, distractors: [n - 1, n + 1, n + 2]),
+          steps: [
+            'Count the straight edges around the outside.',
+            '${_a(name)} has $n sides.',
+          ],
+        );
+      case 1:
+        final name = c.pick(sides.keys.toList());
+        final n = sides[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many corners does this $name have?',
+          answer: '$n',
+          difficulty: c.difficulty,
+          diagram: diagramFor(name),
+          choices: c.choicesAround(n, distractors: [n - 1, n + 1, n + 2]),
+          steps: [
+            'A corner is where two sides meet.',
+            'Every side ends at a corner, so a shape has as many corners as '
+                'sides.',
+            '${_a(name)} has $n corners.',
+          ],
+        );
+      case 2:
+        // Named from the picture, not from a description. Recognising the
+        // shape on sight is the skill; the side count is the way in.
+        final name = c.pick(sides.keys.toList());
+        final n = sides[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What is the name of this shape?',
+          answer: name,
+          difficulty: c.difficulty,
+          diagram: diagramFor(name),
+          choices: _withAnswer(sides.keys.toList(), name, c),
+          steps: [
+            'Count the straight sides: there are $n.',
+            'A shape with $n straight sides drawn like this is ${_a(name)}.',
+          ],
+        );
+      default:
+        final n = c.int_(3, 8);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'This shape has $n straight sides.\n\n'
+              'How many corners does it have?',
+          answer: '$n',
+          difficulty: c.difficulty,
+          diagram: 'polygon:$n',
+          choices: c.choicesAround(n, distractors: [n - 1, n + 1, n * 2]),
+          steps: [
+            'Follow the outline: each side ends where the next one begins.',
+            'So the number of corners is the same as the number of sides, $n.',
+          ],
+          hint: 'Trace round the shape with your finger and count the turns.',
+        );
+    }
   });
 
   register('shapes_3d', (c) {
-    const solids = {
+    // Faces, edges, vertices. Counted the way NCERT counts them.
+    const flat = {
       'cube': [6, 12, 8],
       'cuboid': [6, 12, 8],
       'square pyramid': [5, 8, 5],
+      'triangular pyramid': [4, 6, 4],
       'triangular prism': [5, 9, 6],
-      'cylinder': [3, 2, 0],
+      'pentagonal prism': [7, 15, 10],
+      'hexagonal prism': [8, 18, 12],
+      'pentagonal pyramid': [6, 10, 6],
+      'hexagonal pyramid': [7, 12, 7],
     };
+    // A curved surface makes "how many edges" a matter of convention rather
+    // than of counting, so these are only ever asked about their faces.
+    const curved = {'cylinder': 3, 'cone': 2, 'sphere': 1};
     const partNames = ['faces', 'edges', 'vertices'];
-    final name = c.pick(solids.keys.toList());
-    final idx = c.int_(0, name == 'cylinder' ? 0 : 2);
-    final n = solids[name]![idx];
+
+    String explain(int idx) => switch (idx) {
+          0 => 'Faces are the flat surfaces, including the ones you cannot see.',
+          1 => 'Edges are the lines where two faces meet.',
+          _ => 'Vertices are the corners.',
+        };
+
+    // Named from the picture. A cube and a cuboid share the same 6, 12 and 8,
+    // so the counts alone could never have picked one out anyway.
+    if (c.int_(0, 3) == 3) {
+      final all = [...flat.keys, ...curved.keys];
+      final name = c.pick(all);
+      return Question(
+        skillId: c.skillId,
+        prompt: 'What is the name of this solid?',
+        answer: name,
+        difficulty: c.difficulty,
+        diagram: 'solid:${name.replaceAll(' ', '-')}',
+        choices: _withAnswer(all, name, c),
+        steps: [
+          'Look at the flat faces and at how they meet.',
+          'This solid is ${_a(name)}.',
+        ],
+      );
+    }
+
+    if (c.int_(0, 4) == 4) {
+      final name = c.pick(curved.keys.toList());
+      final n = curved[name]!;
+      return Question(
+        skillId: c.skillId,
+        prompt: 'How many faces does this $name have?',
+        answer: '$n',
+        difficulty: c.difficulty,
+        diagram: 'solid:$name',
+        choices: c.choicesAround(n, distractors: [n + 1, n + 2, n + 3]),
+        steps: [
+          'Count the flat faces, then add the curved surface.',
+          '${_a(name)} has $n.',
+        ],
+      );
+    }
+
+    final name = c.pick(flat.keys.toList());
+    final idx = c.int_(0, 2);
+    final n = flat[name]![idx];
     return Question(
       skillId: c.skillId,
       prompt: 'How many ${partNames[idx]} does this $name have?',
@@ -48,36 +159,123 @@ void registerGeometry() {
       difficulty: c.difficulty,
       diagram: 'solid:${name.replaceAll(' ', '-')}',
       choices: c.choicesAround(n, distractors: [n - 2, n + 2, n + 4]),
-      steps: [
-        idx == 0
-            ? 'Faces are the flat surfaces, including the ones you cannot see.'
-            : idx == 1
-                ? 'Edges are the lines where two faces meet.'
-                : 'Vertices are the corners.',
-        'A $name has $n ${partNames[idx]}.',
-      ],
+      steps: [explain(idx), '${_a(name)} has $n ${partNames[idx]}.'],
     );
   });
 
   register('lines', (c) {
-    const facts = {
-      'How many endpoints does a line segment have?': '2',
-      'How many endpoints does a ray have?': '1',
-      'How many endpoints does a line have?': '0',
+    const figures = {
+      'line segment': 2,
+      'ray': 1,
+      'line': 0,
     };
-    final q = c.pick(facts.keys.toList());
-    final a = facts[q]!;
-    return Question(
-      skillId: c.skillId,
-      prompt: q,
-      answer: a,
-      difficulty: c.difficulty,
-      choices: const ['0', '1', '2'],
-      steps: [
-        'A line goes on forever both ways, a ray one way, a segment neither.',
-        'Answer: $a.',
-      ],
-    );
+    const polygonSides = {
+      'triangle': 3, 'quadrilateral': 4, 'pentagon': 5,
+      'hexagon': 6, 'heptagon': 7, 'octagon': 8,
+    };
+
+    switch (c.int_(0, 5)) {
+      case 0:
+        final name = c.pick(figures.keys.toList());
+        final n = figures[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many endpoints does ${_a(name)} have?',
+          answer: '${n}',
+          difficulty: c.difficulty,
+          choices: const ['0', '1', '2'],
+          steps: [
+            'A line goes on forever both ways, a ray one way, a segment '
+                'neither.',
+            'Answer: ${n}.',
+          ],
+        );
+      case 1:
+        // The same three facts, asked the other way round: from the property
+        // to the name. Recognising the word is half of what this skill is.
+        final name = c.pick(figures.keys.toList());
+        final n = figures[name]!;
+        final describe = switch (n) {
+          2 => 'has two endpoints and can be measured',
+          1 => 'starts at one point and goes on forever in one direction',
+          _ => 'goes on forever in both directions',
+        };
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Which figure ${describe}?',
+          answer: name,
+          difficulty: c.difficulty,
+          choices: _withAnswer(figures.keys.toList(), name, c),
+          steps: ['${_a(name)} ${describe}.'],
+        );
+      case 2:
+        final name = c.pick(polygonSides.keys.toList());
+        final n = polygonSides[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many line segments make up ${_a(name)}?',
+          answer: '${n}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n, distractors: [n - 1, n + 1, n + 2]),
+          steps: [
+            'Each side of ${_a(name)} is a line segment with two endpoints.',
+            '${_a(name)} has ${n} sides, so ${n} line segments.',
+          ],
+        );
+      case 3:
+        // Class 2 territory: which way a line runs on the page.
+        final kind = c.pick(['horizontal', 'vertical', 'slanting']);
+        final describe = switch (kind) {
+          'horizontal' => 'runs flat across the page, like the horizon',
+          'vertical' => 'runs straight up and down the page',
+          _ => 'runs neither flat nor straight up, but at a tilt',
+        };
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What do we call a line that ${describe}?',
+          answer: kind,
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              const ['horizontal', 'vertical', 'slanting'], kind, c),
+          steps: ['A line that ${describe} is called ${kind}.'],
+        );
+      case 4:
+        final kind = c.pick(['parallel', 'perpendicular', 'intersecting']);
+        final describe = switch (kind) {
+          'parallel' => 'stay the same distance apart and never meet',
+          'perpendicular' => 'cross each other at a right angle',
+          _ => 'cross each other at a point',
+        };
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What do we call two lines that ${describe}?',
+          answer: kind,
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              const ['parallel', 'perpendicular', 'intersecting'], kind, c),
+          steps: ['Two lines that ${describe} are ${kind} lines.'],
+        );
+      default:
+        // Points in a row on one line, which is the first real thing a child
+        // computes with segments rather than just naming them.
+        final ab = c.int_(2, c.band(9, 40));
+        final bc = c.int_(2, c.band(9, 40));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A, B and C lie on a straight line in that order.\n\n'
+              'AB = ${ab} cm and BC = ${bc} cm. How long is AC?',
+          answer: '${ab + bc}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ab + bc,
+              distractors: [(ab - bc).abs(), ab, bc]),
+          steps: [
+            'B lies between A and C, so AB and BC join end to end.',
+            'AB + BC = AC.',
+            '${ab} + ${bc} = ${ab + bc} cm.',
+          ],
+          hint: 'The two shorter segments together make the long one.',
+        );
+    }
   });
 
   register('angles', (c) {
@@ -333,24 +531,103 @@ void registerGeometry() {
   });
 
   register('symmetry', (c) {
+    // A circle is left out on purpose: it has infinitely many lines of
+    // symmetry, and no whole number is the right answer.
     const lines = {
-      'square': 4, 'rectangle': 2, 'equilateral triangle': 3,
-      'isosceles triangle': 1, 'regular pentagon': 5, 'regular hexagon': 6,
-      'circle': 0,
+      'square': 4, 'rectangle': 2, 'rhombus': 2, 'parallelogram': 0,
+      'equilateral triangle': 3, 'isosceles triangle': 1,
+      'scalene triangle': 0, 'kite': 1, 'semicircle': 1,
+      'regular pentagon': 5, 'regular hexagon': 6, 'regular octagon': 8,
     };
-    final name = c.pick(lines.keys.where((k) => k != 'circle').toList());
-    final n = lines[name]!;
-    return Question(
-      skillId: c.skillId,
-      prompt: 'How many lines of symmetry does a $name have?',
-      answer: '$n',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(n, distractors: [n + 1, n - 1, n + 2]),
-      steps: [
-        'A line of symmetry folds the shape onto itself exactly.',
-        'A $name has $n.',
-      ],
-    );
+    // Capital letters, the way NCERT introduces the idea. Drawn plainly, with
+    // no serifs or slant - which is why O and Q are not here, since how many
+    // lines they have depends entirely on how they are written.
+    const letters = {
+      'A': 1, 'B': 1, 'C': 1, 'D': 1, 'E': 1, 'H': 2, 'I': 2, 'M': 1,
+      'T': 1, 'U': 1, 'V': 1, 'W': 1, 'X': 2, 'Y': 1,
+      'N': 0, 'S': 0, 'Z': 0,
+    };
+    // How many times a shape looks unchanged in one full turn. Everything has
+    // an order of at least 1 - the turn all the way back to the start.
+    const order = {
+      'square': 4, 'rectangle': 2, 'rhombus': 2, 'parallelogram': 2,
+      'equilateral triangle': 3, 'isosceles triangle': 1,
+      'scalene triangle': 1, 'kite': 1,
+      'regular pentagon': 5, 'regular hexagon': 6, 'regular octagon': 8,
+    };
+
+    switch (c.int_(0, 3)) {
+      case 0:
+        final name = c.pick(lines.keys.toList());
+        final n = lines[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many lines of symmetry does ${_a(name)} have?',
+          answer: '${n}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n, distractors: [n + 1, n - 1, n + 2]),
+          steps: [
+            'A line of symmetry folds the shape onto itself exactly.',
+            '${_a(name)} has ${n}.',
+          ],
+        );
+      case 1:
+        final letter = c.pick(letters.keys.toList());
+        final n = letters[letter]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many lines of symmetry does the capital letter '
+              '${letter} have?',
+          answer: '${n}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n, distractors: [n + 1, n + 2, n - 1]),
+          steps: [
+            'Try folding the letter in half: across, down, and slanting.',
+            n == 0
+                ? 'No fold puts ${letter} exactly on top of itself, so it has 0.'
+                : 'The letter ${letter} folds onto itself ${n} ${n == 1 ? 'way' : 'ways'}.',
+          ],
+          hint: 'Fold it down the middle first, then across.',
+        );
+      case 2:
+        final name = c.pick(order.keys.toList());
+        final n = order[name]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What is the order of rotational symmetry of ${_a(name)}?',
+          answer: '${n}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n, distractors: [n + 1, n - 1, n + 2]),
+          steps: [
+            'Turn the shape one full circle and count how many times it looks '
+                'exactly as it started.',
+            '${_a(name)} looks the same ${n} ${n == 1 ? 'time' : 'times'} in a full turn, so '
+                'is ${n}.',
+          ],
+          hint: 'Every shape counts at least once - the full turn back to the '
+              'start.',
+        );
+      default:
+        // Only shapes that actually turn onto themselves. "Through what angle
+        // does a scalene triangle rotate onto itself" has no answer short of a
+        // full turn.
+        final name = c.pick(order.keys.where((k) => order[k]! > 1).toList());
+        final n = order[name]!;
+        final angle = 360 ~/ n;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Through what smallest angle can ${_a(name)} be turned so that '
+              'it looks exactly the same?\n\nAnswer in degrees.',
+          answer: '${angle}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(angle, distractors: [360, angle * 2, 180]),
+          steps: [
+            '${_a(name)} has rotational symmetry of order ${n}.',
+            'A full turn is 360 degrees, shared into ${n} equal turns.',
+            '360 / ${n} = ${angle} degrees.',
+          ],
+        );
+    }
   });
 
   register('coordinates', (c) {
@@ -396,6 +673,12 @@ void registerGeometry() {
     );
   });
 }
+
+/// "a hexagon" but "an octagon". Worth the four lines: these questions are for
+/// children who are learning to read as well as to count, and "a octagon" on a
+/// printed sheet from their teacher is a small thing taught wrong.
+String _a(String noun) =>
+    'aeiou'.contains(noun[0].toLowerCase()) ? 'an $noun' : 'a $noun';
 
 /// Builds a shuffled four-option list that always contains [answer].
 List<String> _withAnswer(List<String> pool, String answer, GenContext c) {

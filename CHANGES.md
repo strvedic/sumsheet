@@ -236,7 +236,50 @@ quotient and the remainder, like 7 R 3" inside every prompt; labelled
 `Quotient` and `Remainder` blanks say it once per question in less room, and
 exact divisions get only the quotient blank.
 
-## 10. Removed, not ported
+## 10. Four generators that could not fill a sheet
+
+`lib/src/generators/geometry.dart`
+
+These four are pointed at by 18 NCERT chapters between them and each had a
+single question template, so a teacher asking for twenty got three.
+
+| Generator | Distinct questions before | After | NCERT chapters |
+|---|---|---|---|
+| `symmetry` | 6 | 48 | 5 |
+| `lines` | 3 | 396 | 3 |
+| `shapes_2d` | 7 | 21 | 6 |
+| `shapes_3d` | 13 | 31 | 4 |
+
+**symmetry** had one template: lines of symmetry in six named shapes. It now
+also asks about capital letters, which is how NCERT Class 6 introduces the
+idea, plus order of rotational symmetry and the smallest angle of rotation. O
+and Q are left out of the letters - how many lines they have depends entirely
+on how they are written. A circle stays out of the shapes for the same class of
+reason: infinitely many is not a whole number.
+
+**lines** had three hardcoded facts about endpoints. It now also names the
+figure from its property, counts the segments in a polygon, covers horizontal,
+vertical and slanting from Class 2, names parallel, perpendicular and
+intersecting, and computes AC from AB and BC for three points on a line - the
+last of which is unbounded, hence 396.
+
+**shapes_2d** and **shapes_3d** gained corner counts and naming from the
+picture. Naming had to come from the picture rather than from a description,
+because the existing "questions that need a picture have one" test requires it -
+and it is right: a child who does not know what a heptagon looks like cannot
+answer "which shape has 7 sides" either way. Naming a solid from its face,
+edge and vertex counts was dropped for the same reason, and because a cube and
+a cuboid share all three counts, so that question never had one answer.
+
+Nine solids now carry full counts and three curved ones are asked only about
+faces, since "how many edges has a cylinder" is a matter of convention rather
+than of counting.
+
+**Grammar:** these questions read "a octagon" and "a equilateral triangle" -
+already true before this change. Added `_a()`, and a scan over every generator
+at every difficulty confirms nothing now writes "a" before a vowel.
+
+## 11. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
@@ -245,16 +288,12 @@ exact divisions get only the quotient blank.
 
 ## Still outstanding
 
-18 skills still cannot fill a 20-question worksheet. Ranked by how many NCERT
+14 skills still cannot fill a 20-question worksheet. Ranked by how many NCERT
 chapters point at them (see `curriculum/ncert-nep.json`):
 
 | Skill | Distinct questions | NCERT chapters |
 |---|---|---|
-| `shapes-2d` | 7 | 6 |
-| `symmetry` | 6 | 5 |
-| `shapes-3d` | 13 | 4 |
 | `constructions` | 3 | 3 |
-| `lines-rays` | 3 | 3 |
 | `triangle-congruence` | 4 | 1 |
 | `data-piechart` | 6 | 1 |
 | ...11 more, mostly Class 11-12 | 3-16 | 1-2 |
