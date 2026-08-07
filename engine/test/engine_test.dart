@@ -436,6 +436,33 @@ void main() {
     });
   });
 
+  group('worksheets', () {
+    test('a long sheet flows onto a second page instead of throwing', () async {
+      // The two-column grid used to be one Row, and a Row cannot be split
+      // across pages. 24 questions with three working lines overflowed A4 and
+      // the whole PDF failed to build - the teacher got an exception, not a
+      // worksheet.
+      final skill = map['add-2digit-carry'];
+      final bytes = await WorksheetBuilder(
+        skill: skill,
+        questions: generatePractice(skill: skill, count: 24, seed: 3),
+        workingLines: 3,
+      ).build();
+      expect(bytes.length, greaterThan(1000));
+    });
+
+    test('a sheet built from a chapter is named after the chapter', () async {
+      final skill = map['fraction-equivalent'];
+      final bytes = await WorksheetBuilder(
+        skill: skill,
+        questions: generatePractice(skill: skill, count: 4, seed: 3),
+        heading: 'Fractions',
+        curriculumLabel: 'Class 6 - Chapter 7',
+      ).build();
+      expect(bytes.length, greaterThan(1000));
+    });
+  });
+
   group('fractions', () {
     test('exact rational arithmetic, no floating point drift', () {
       expect((Fraction(1, 3) + Fraction(1, 6)).toString(), '1/2');

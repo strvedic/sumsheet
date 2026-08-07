@@ -8,3 +8,5 @@ export 'src/generator.dart' show generatorRegistry;
 export 'src/placement.dart';
 export 'src/question.dart';
 export 'src/skill_map.dart';
+export 'src/curriculum.dart';
+export 'src/worksheet.dart';

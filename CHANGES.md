@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 25.
+Baseline when copied: 24 tests passing. Now: 27.
 
 ---
 
@@ -71,7 +71,40 @@ it.
 `number_theory.dart` gained an import of `../gen_context.dart`, which it did
 not previously need.
 
-## 3. Removed, not ported
+## 3. The two-column worksheet grid could not span a page
+
+`lib/src/worksheet.dart` (copied from `app/lib/services/worksheet.dart`)
+
+`_questionGrid` returned the whole grid as one `pw.Row`, and a Row cannot be
+split across pages. Twenty-four questions with three working lines overflowed
+A4 and the PDF threw rather than paginating:
+
+    Widget won't fit into the page as its height (886.5) exceed a page
+    height (773.9)
+
+**This bug is in the shipped app too.** Any sheet long enough to need a second
+page fails to build.
+
+Replaced with `_questionRows`, which returns one widget per row so MultiPage
+can break between them. Numbering now runs left to right then down, rather
+than down one column and back up the other - reading order has to stay right
+when a sheet spills onto page two.
+
+Two tests added under a new `worksheets` group, one pinned to the 24-question
+three-line case that used to throw.
+
+## 4. WorksheetBuilder gained a heading
+
+A chapter sheet draws on several skills, so titling it `skill.name` named it
+after whichever skill came first - a Class 6 Chapter 7 sheet called itself
+"Equivalent fractions". Added an optional `heading`, defaulting to the old
+behaviour, plus `curriculumLabel` for the "Class 6 - Chapter 7" line that
+replaces the `typical_class` hint when a chapter is known.
+
+If this is ported, note the app has no curriculum file, so both stay null
+there and nothing changes.
+
+## 5. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

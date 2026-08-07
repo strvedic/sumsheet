@@ -1,10 +1,13 @@
 name: maths_engine
-description: Board-independent maths question generator and adaptive placement engine.
+description: Board-independent maths question generator, and the A4 worksheets it prints.
 version: 0.1.0
 publish_to: none
 
 environment:
   sdk: ^3.11.0
+
+dependencies:
+  pdf: ^3.11.0
 
 dev_dependencies:
   test: ^1.25.0
