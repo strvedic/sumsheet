@@ -616,8 +616,8 @@ void registerGeometry() {
         final angle = 360 ~/ n;
         return Question(
           skillId: c.skillId,
-          prompt: 'Through what smallest angle can ${_a(name)} be turned so that '
-              'it looks exactly the same?\n\nAnswer in degrees.',
+          prompt: 'Through what smallest angle, in degrees, can ${_a(name)} '
+              'be turned so that it looks exactly the same?',
           answer: '${angle}',
           difficulty: c.difficulty,
           choices: c.choicesAround(angle, distractors: [360, angle * 2, 180]),

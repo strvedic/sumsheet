@@ -193,17 +193,22 @@ full width of the card - some answers are one digit and some are
 "1, 2, 3, 4, 6, 12". A Class 6 fractions sheet went from 9 questions over three
 pages to 16 on one.
 
-`needsWorkingSpace` decides, and is public so a caller offering the choice knows
-what it would get by default:
+`needsWorkingSpace` is now simply `workingLines >= 3` - the teacher decides,
+and it is public so a caller offering the choice knows the default.
 
-- a prompt with a line break, or over 80 characters, means the sheet needs room
-- `workingLines >= 3` means the teacher asked for room and gets it
-- otherwise, answer boxes
+Guessing from the prompt was tried twice and does not work. "Through what
+smallest angle can a rhombus be turned so that it looks exactly the same?" is
+120 characters and needs no working at all, while a two-step word problem can
+be shorter and need plenty; no threshold separates them. The first attempt
+switched the whole sheet to ruled lines if any one prompt was long or contained
+a line break, which turned a 20-question symmetry sheet into four pages. The
+second sized the cards by the longest prompt on the sheet, which was the same
+all-or-nothing failure moved one level down.
 
-One long question pulls the whole sheet over, because a sheet is all one shape
-or all the other.
-
-Long division keeps its ruled lines, which is the point of the rule.
+What works: **size each card by its own prompt.** Over 110 characters gets a
+44pt box, over 60 gets 30pt, otherwise 21pt. The column count is still one
+number for the whole grid, but it only drops to a single column past 150
+characters, where half a page really is too narrow to read.
 
 **Watch for this if porting:** `CrossAxisAlignment.stretch` on the card row
 looks right and throws. Inside a MultiPage the row height is unbounded, so

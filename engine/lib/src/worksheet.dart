@@ -645,25 +645,43 @@ class WorksheetBuilder {
     ];
   }
 
-  /// True when the sheet needs somewhere to work, not just somewhere to put
-  /// the answer. Public because a caller offering "show working space" as an
-  /// option needs to know what it would get by default.
+  /// True when the sheet is ruled for working rather than boxed for answers.
+  /// Public because a caller offering the choice has to know the default.
   ///
-  /// Two ruled lines running the full width of the page under "Which is
-  /// greater: 4/5 or 7/2?" is nine questions to a page and looks like a
-  /// photocopy of a photocopy. But long division genuinely needs the room, and
-  /// so does a teacher who asked for it.
-  bool get needsWorkingSpace {
-    if (workingLines >= 3) return true;
-    return questions.any(
-      (q) => q.prompt.contains(RegExp('[\r\n]')) || q.prompt.length > 80,
-    );
-  }
+  /// Only the teacher decides this now. Guessing from the prompt does not
+  /// work: "Through what smallest angle can a rhombus be turned so that it
+  /// looks exactly the same?" is 120 characters and needs no working at all,
+  /// while a two-step word problem can be shorter and need plenty. Any
+  /// threshold that catches the one catches the other.
+  ///
+  /// So the card layout takes long questions too, giving them a deeper box and
+  /// the full width, instead of switching the whole sheet over.
+  bool get needsWorkingSpace => workingLines >= 3;
 
-  /// Short questions in cards, each with a box for the answer. Two across,
-  /// which fits a fraction or a "which is greater" comfortably and puts twenty
-  /// of them on one page instead of nine.
+  /// Questions in cards, each with a box to write the answer in.
+  ///
+  /// Two across fits a fraction or a "which is greater" comfortably and puts
+  /// twenty on one page instead of nine. A long question means more to work
+  /// out, so those get one card per row and a deeper box - the same card,
+  /// scaled, rather than a different layout.
   List<pw.Widget> _answerCards() {
+    // Sized per card, not per sheet. Sizing by the longest prompt let one
+    // 120-character symmetry question turn all twenty into full-width cards
+    // with a working box none of them needed - the same all-or-nothing that
+    // switching layouts caused, just moved.
+    double boxFor(Question q) => q.prompt.length > 110
+        ? 44.0
+        : q.prompt.length > 60
+            ? 30.0
+            : 21.0;
+
+    // The grid still needs one column count. Only drop to a single column for
+    // sheets that are word problems throughout, where half a page is genuinely
+    // too narrow to read.
+    final longest =
+        questions.map((q) => q.prompt.length).reduce((a, b) => a > b ? a : b);
+    final perRow = longest > 150 ? 1 : 2;
+
     pw.Widget card(int i) => pw.Container(
           padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 8),
           decoration: pw.BoxDecoration(
@@ -699,7 +717,7 @@ class WorksheetBuilder {
               // Full width rather than a small box: some answers are a single
               // digit and some are "1, 2, 3, 4, 6, 12".
               pw.Container(
-                height: 21,
+                height: boxFor(questions[i]),
                 decoration: pw.BoxDecoration(
                   border: pw.Border.all(color: _rule, width: 0.7),
                   borderRadius: pw.BorderRadius.circular(3),
@@ -710,7 +728,7 @@ class WorksheetBuilder {
         );
 
     return [
-      for (var i = 0; i < questions.length; i += 2)
+      for (var i = 0; i < questions.length; i += perRow)
         pw.Container(
           margin: const pw.EdgeInsets.only(bottom: 9),
           child: pw.Row(
@@ -718,11 +736,14 @@ class WorksheetBuilder {
             // stretching asks for infinite height and the build throws.
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Expanded(child: card(i)),
-              pw.SizedBox(width: 10),
-              pw.Expanded(
-                child: i + 1 < questions.length ? card(i + 1) : pw.SizedBox(),
-              ),
+              for (var col = 0; col < perRow; col++) ...[
+                if (col > 0) pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: i + col < questions.length
+                      ? card(i + col)
+                      : pw.SizedBox(),
+                ),
+              ],
             ],
           ),
         ),
