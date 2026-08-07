@@ -1,0 +1,5 @@
+# Dart and text sources are stored LF in the repo, whatever the OS checks out.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
