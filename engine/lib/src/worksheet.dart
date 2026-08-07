@@ -595,6 +595,90 @@ class WorksheetBuilder {
     ];
   }
 
+  /// True when the sheet needs somewhere to work, not just somewhere to put
+  /// the answer. Public because a caller offering "show working space" as an
+  /// option needs to know what it would get by default.
+  ///
+  /// Two ruled lines running the full width of the page under "Which is
+  /// greater: 4/5 or 7/2?" is nine questions to a page and looks like a
+  /// photocopy of a photocopy. But long division genuinely needs the room, and
+  /// so does a teacher who asked for it.
+  bool get needsWorkingSpace {
+    if (workingLines >= 3) return true;
+    return questions.any(
+      (q) => q.prompt.contains(RegExp('[\r\n]')) || q.prompt.length > 80,
+    );
+  }
+
+  /// Short questions in cards, each with a box for the answer. Two across,
+  /// which fits a fraction or a "which is greater" comfortably and puts twenty
+  /// of them on one page instead of nine.
+  List<pw.Widget> _answerCards() {
+    pw.Widget card(int i) => pw.Container(
+          padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 8),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: _cardEdge, width: 0.8),
+            borderRadius: pw.BorderRadius.circular(4),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.SizedBox(
+                    width: 19,
+                    child: pw.Text(
+                      '${i + 1}.',
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _numberLabel,
+                      ),
+                    ),
+                  ),
+                  pw.Expanded(
+                    child: pw.Text(
+                      pdfSafe(questions[i].prompt),
+                      style: const pw.TextStyle(fontSize: 11, lineSpacing: 2),
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 7),
+              // Full width rather than a small box: some answers are a single
+              // digit and some are "1, 2, 3, 4, 6, 12".
+              pw.Container(
+                height: 21,
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: _rule, width: 0.7),
+                  borderRadius: pw.BorderRadius.circular(3),
+                ),
+              ),
+            ],
+          ),
+        );
+
+    return [
+      for (var i = 0; i < questions.length; i += 2)
+        pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 9),
+          child: pw.Row(
+            // Not stretch: inside a MultiPage the row height is unbounded, so
+            // stretching asks for infinite height and the build throws.
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(child: card(i)),
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: i + 1 < questions.length ? card(i + 1) : pw.SizedBox(),
+              ),
+            ],
+          ),
+        ),
+    ];
+  }
+
   /// The questions, as separate widgets so a long sheet can flow onto page 2.
   ///
   /// Returning one widget for the whole grid used to throw: a two-column Row
@@ -611,6 +695,8 @@ class WorksheetBuilder {
 
     final pictures = _asPictureCounts;
     if (pictures != null) return _pictureCards(pictures);
+
+    if (!needsWorkingSpace) return _answerCards();
 
     // Prompts that span multiple lines (word problems, ordering questions)
     // need the full width; short sums do not.

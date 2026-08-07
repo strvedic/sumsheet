@@ -437,6 +437,47 @@ void main() {
   });
 
   group('worksheets', () {
+    test('short questions get an answer box, long ones get room to work', () {
+      Question q(String prompt) => Question(
+          skillId: 'x', prompt: prompt, answer: '1', difficulty: 3,
+          steps: const ['-']);
+
+      WorksheetBuilder sheet(List<Question> qs, {int lines = 2}) =>
+          WorksheetBuilder(
+              skill: map['fraction-equivalent'],
+              questions: qs,
+              workingLines: lines);
+
+      // "Which is greater: 4/5 or 7/2?" with two ruled lines under it, full
+      // page width, is nine questions to a page and looks like a photocopy of
+      // a photocopy.
+      expect(sheet([q('Which is greater: 4/5 or 7/2 ?')]).needsWorkingSpace,
+          isFalse);
+
+      // Long division prints its instruction on a second line, and genuinely
+      // needs the room.
+      expect(
+          sheet([
+            q('3378 / 17 = ?' '\n' 'Give the quotient and the remainder'),
+          ]).needsWorkingSpace,
+          isTrue);
+
+      // One long question in the set pulls the whole sheet over, because a
+      // sheet is all one shape or all the other.
+      expect(
+          sheet([
+            q('Which is greater: 4/5 or 7/2 ?'),
+            q('A shopkeeper buys 45 boxes of pencils at 128 rupees each and '
+                'sells them at a profit of 15 percent. Find the selling price.'),
+          ]).needsWorkingSpace,
+          isTrue);
+
+      // And a teacher who asks for working lines gets them regardless.
+      expect(sheet([q('Which is greater: 4/5 or 7/2 ?')], lines: 4)
+          .needsWorkingSpace, isTrue);
+    });
+
+
     test('nothing a generator prints is silently dropped by the PDF font', () {
       // The PDF's built-in font covers CP1252 and drops anything else without
       // a word. Counting questions used to write their objects as U+25CF, so

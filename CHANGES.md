@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 30.
+Baseline when copied: 24 tests passing. Now: 31.
 
 ---
 
@@ -179,7 +179,37 @@ The palette is now greyscale throughout, chosen at the grey values rather than
 left to the printer to derive. Verified: every ink colour in a generated sheet
 has R = G = B.
 
-## 8. Removed, not ported
+## 8. Short questions get an answer box, not two ruled lines
+
+`lib/src/worksheet.dart`
+
+Anything that was not a bare sum fell to full-page-width prompts with two ruled
+lines under each. For "Which is greater: 4/5 or 7/2?" that is a pair of
+150mm rules under a one-word answer, nine questions to a page, and it looks
+like a photocopy of a photocopy.
+
+Short questions now go in cards two across, each with a bordered answer box the
+full width of the card - some answers are one digit and some are
+"1, 2, 3, 4, 6, 12". A Class 6 fractions sheet went from 9 questions over three
+pages to 16 on one.
+
+`needsWorkingSpace` decides, and is public so a caller offering the choice knows
+what it would get by default:
+
+- a prompt with a line break, or over 80 characters, means the sheet needs room
+- `workingLines >= 3` means the teacher asked for room and gets it
+- otherwise, answer boxes
+
+One long question pulls the whole sheet over, because a sheet is all one shape
+or all the other.
+
+Long division keeps its ruled lines, which is the point of the rule.
+
+**Watch for this if porting:** `CrossAxisAlignment.stretch` on the card row
+looks right and throws. Inside a MultiPage the row height is unbounded, so
+stretching asks for infinite height and the build fails.
+
+## 9. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
