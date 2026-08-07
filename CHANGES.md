@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 31.
+Baseline when copied: 24 tests passing. Now: 32.
 
 ---
 
@@ -209,7 +209,34 @@ Long division keeps its ruled lines, which is the point of the rule.
 looks right and throws. Inside a MultiPage the row height is unbounded, so
 stretching asks for infinite height and the build fails.
 
-## 9. Removed, not ported
+## 9. Long division goes under a bracket
+
+`lib/src/worksheet.dart`
+
+"3378 / 17 = ?" on one line with two ruled lines under it is not long
+division. The layout **is** the method: the quotient is written above the bar
+and the working goes down the page, multiply, subtract, bring down. A sheet
+that sets it out horizontally is asking for the answer without teaching the
+procedure.
+
+`LongDivision.tryParse` recognises a division and the worksheet draws the
+bracket - divisor outside, dividend under the bar, blank space above it for the
+quotient and blank space below for the working. Same rule as everywhere else:
+it reconstructs the answer first (`divisor x quotient + remainder == dividend`,
+and the remainder must be smaller than the divisor) and falls back rather than
+print a sum that disagrees with its own key.
+
+Working space scales with the dividend, because the number of
+multiply-subtract-bring-down rounds is the number of digits: 7 into 42 needs
+almost none, 17 into 3378 needs four. Both cards in a row take the taller one's
+space - sized individually the row looks like a printing fault.
+
+It also gets the instruction off the questions. The generator repeats "Give the
+quotient and the remainder, like 7 R 3" inside every prompt; labelled
+`Quotient` and `Remainder` blanks say it once per question in less room, and
+exact divisions get only the quotient blank.
+
+## 10. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

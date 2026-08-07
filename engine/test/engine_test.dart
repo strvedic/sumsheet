@@ -437,6 +437,35 @@ void main() {
   });
 
   group('worksheets', () {
+    test('a division is set out under a bracket, and checks its own answer', () {
+      LongDivision? parse(String prompt, String answer) =>
+          LongDivision.tryParse(Question(
+              skillId: 'x', prompt: prompt, answer: answer, difficulty: 3,
+              steps: const ['-']));
+
+      final exact = parse('7225 / 17 = ?', '425');
+      expect(exact, isNotNull);
+      expect(exact!.divisor, '17');
+      expect(exact.dividend, '7225');
+      expect(exact.wantsRemainder, isFalse);
+
+      final withR = parse('3378 / 17 = ?\nGive the quotient', '198 R 12');
+      expect(withR?.wantsRemainder, isTrue);
+
+      // 17 x 198 + 12 is 3378. If it were not, the sheet would print one sum
+      // and mark another.
+      expect(parse('3378 / 17 = ?', '199 R 12'), isNull);
+
+      // A remainder can never reach the divisor.
+      expect(parse('40 / 5 = ?', '7 R 5'), isNull);
+
+      // The working space follows the dividend, because that is how many
+      // rounds of multiply-subtract-bring-down there are.
+      expect(parse('7225 / 17 = ?', '425')!.workingSpace,
+          greaterThan(parse('42 / 7 = ?', '6')!.workingSpace));
+    });
+
+
     test('short questions get an answer box, long ones get room to work', () {
       Question q(String prompt) => Question(
           skillId: 'x', prompt: prompt, answer: '1', difficulty: 3,

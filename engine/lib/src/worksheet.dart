@@ -141,6 +141,56 @@ String unprintableInPdf(String s) {
   return out.toString();
 }
 
+/// A division set out the way it is actually worked: the divisor outside the
+/// bracket, the dividend inside it, blank space above the bar for the quotient
+/// and blank space below for the working.
+///
+/// "3378 / 17 = ?" printed on one line with two ruled lines under it is not
+/// long division. The layout *is* the method - the child writes the quotient
+/// above the bar and subtracts down the page - so a sheet that does not set it
+/// out that way is asking for the answer without teaching the procedure.
+///
+/// It also lets the instruction come off the questions. The generator repeats
+/// "Give the quotient and the remainder, like 7 R 3" in every single prompt;
+/// labelled blanks say the same thing once, per question, in less space.
+class LongDivision {
+  const LongDivision(this.dividend, this.divisor, this.wantsRemainder);
+
+  final String dividend;
+  final String divisor;
+
+  /// Whether this one divides exactly. Exact sums get a quotient blank only.
+  final bool wantsRemainder;
+
+  /// Blank space to leave under the bracket, in points.
+  ///
+  /// Long division is worked down the page - multiply, subtract, bring down -
+  /// so the number of those rounds is the number of digits in the dividend.
+  /// A table fact like 7 into 42 needs almost none; 17 into 3378 needs four
+  /// rounds and the room for them.
+  double get workingSpace => 14.0 * dividend.length + 12;
+
+  static final _pattern = RegExp(r'^(\d{2,7}) / (\d{1,4}) = \?');
+  static final _answer = RegExp(r'^(\d+)(?: R (\d+))?$');
+
+  static LongDivision? tryParse(Question q) {
+    final m = _pattern.firstMatch(q.prompt.trim());
+    if (m == null) return null;
+    final a = _answer.firstMatch(q.answer.trim());
+    if (a == null) return null;
+    final dividend = int.parse(m.group(1)!);
+    final divisor = int.parse(m.group(2)!);
+    final quotient = int.parse(a.group(1)!);
+    final remainder = int.tryParse(a.group(2) ?? '0') ?? 0;
+    // Never lay out a division that does not reconstruct its own answer.
+    if (divisor == 0) return null;
+    if (divisor * quotient + remainder != dividend) return null;
+    if (remainder >= divisor) return null;
+    return LongDivision(
+        m.group(1)!, m.group(2)!, a.group(2) != null);
+  }
+}
+
 /// A counting question, with the objects to be counted.
 ///
 /// The generator writes the objects as U+25CF dots straight into the prompt.
@@ -679,6 +729,131 @@ class WorksheetBuilder {
     ];
   }
 
+  /// Every question as a long division, or null if any of them is not one.
+  List<LongDivision>? get _asLongDivisions {
+    final out = <LongDivision>[];
+    for (final q in questions) {
+      final s = LongDivision.tryParse(q);
+      if (s == null) return null;
+      out.add(s);
+    }
+    return out;
+  }
+
+  /// Division brackets, two across, with the page to work down.
+  List<pw.Widget> _divisionCards(List<LongDivision> sums) {
+    final digit = pw.TextStyle(
+      fontSize: 13,
+      fontWeight: pw.FontWeight.bold,
+      letterSpacing: 1.4,
+    );
+
+    pw.Widget blank(String label) => pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            pw.Text(label,
+                style: const pw.TextStyle(fontSize: 9, color: _numberLabel)),
+            pw.SizedBox(width: 5),
+            pw.Expanded(
+              child: pw.Container(
+                height: 12,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: _rule, width: 0.7),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+
+    // Both cards in a row get the taller one's working space. Sized
+    // individually they come out uneven, and a row where one box is shorter
+    // than its neighbour reads as a printing fault rather than as a smaller sum.
+    pw.Widget card(int i, double space) {
+      final s = sums[i];
+      return pw.Container(
+        padding: const pw.EdgeInsets.fromLTRB(11, 7, 11, 9),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: _cardEdge, width: 0.8),
+          borderRadius: pw.BorderRadius.circular(4),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              '${i + 1}.',
+              style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: _numberLabel,
+              ),
+            ),
+            pw.SizedBox(height: 3),
+            pw.Row(
+              // Bottom aligned, so the divisor and the bracket sit on the
+              // dividend's line while the quotient space rises above the bar.
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(s.divisor, style: digit),
+                pw.SizedBox(width: 3),
+                pw.Text(')', style: digit),
+                pw.SizedBox(width: 1),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Where the quotient is written, above the bar.
+                    pw.SizedBox(height: 17),
+                    pw.Container(
+                      padding: const pw.EdgeInsets.only(top: 2, right: 4),
+                      decoration: const pw.BoxDecoration(
+                        border: pw.Border(
+                          top: pw.BorderSide(color: _rule, width: 1),
+                        ),
+                      ),
+                      child: pw.Text(s.dividend, style: digit),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Multiply, subtract, bring down - that happens down the page, so
+            // the page has to be there.
+            pw.SizedBox(height: space),
+            blank('Quotient'),
+            if (s.wantsRemainder) ...[
+              pw.SizedBox(height: 7),
+              blank('Remainder'),
+            ],
+          ],
+        ),
+      );
+    }
+
+    final rows = <pw.Widget>[];
+    for (var i = 0; i < sums.length; i += 2) {
+      final space = sums
+          .skip(i)
+          .take(2)
+          .map((s) => s.workingSpace)
+          .reduce((a, b) => a > b ? a : b);
+      rows.add(pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 10),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(child: card(i, space)),
+            pw.SizedBox(width: 10),
+            pw.Expanded(
+              child: i + 1 < sums.length ? card(i + 1, space) : pw.SizedBox(),
+            ),
+          ],
+        ),
+      ));
+    }
+    return rows;
+  }
+
   /// The questions, as separate widgets so a long sheet can flow onto page 2.
   ///
   /// Returning one widget for the whole grid used to throw: a two-column Row
@@ -695,6 +870,9 @@ class WorksheetBuilder {
 
     final pictures = _asPictureCounts;
     if (pictures != null) return _pictureCards(pictures);
+
+    final divisions = _asLongDivisions;
+    if (divisions != null) return _divisionCards(divisions);
 
     if (!needsWorkingSpace) return _answerCards();
 
