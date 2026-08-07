@@ -437,6 +437,41 @@ void main() {
   });
 
   group('worksheets', () {
+    test('a plain sum is recognised as a stacked one, and nothing else is', () {
+      ColumnSum? parse(String prompt, String answer) => ColumnSum.tryParse(
+            Question(
+                skillId: 'x', prompt: prompt, answer: answer, difficulty: 3,
+                steps: const ['-']),
+          );
+
+      expect(parse('47 + 38 = ?', '85')?.op, '+');
+      expect(parse('90 - 23 = ?', '67')?.op, '-');
+      expect(parse('12 x 15 = ?', '180')?.op, '×');
+
+      // Division is written under a bracket in an Indian exercise book, not
+      // stacked with a rule under it.
+      expect(parse('84 / 4 = ?', '21'), isNull);
+
+      // Nothing that is not a bare sum.
+      expect(parse('Which number is greater: 8 or 5?', '8'), isNull);
+      expect(parse('A box holds 6 pens. How many in 4 boxes?', '24'), isNull);
+
+      // And never a sum that disagrees with its own answer key - that would
+      // print one question and mark a different one.
+      expect(parse('47 + 38 = ?', '84'), isNull);
+    });
+
+    test('multiplying by two digits leaves room for partial products', () {
+      final short = ColumnSum.tryParse(Question(
+          skillId: 'x', prompt: '47 + 38 = ?', answer: '85', difficulty: 3,
+          steps: const ['-']))!;
+      final long = ColumnSum.tryParse(Question(
+          skillId: 'x', prompt: '47 x 38 = ?', answer: '1786', difficulty: 3,
+          steps: const ['-']))!;
+      expect(long.answerSpace, greaterThan(short.answerSpace * 2));
+    });
+
+
     test('a long sheet flows onto a second page instead of throwing', () async {
       // The two-column grid used to be one Row, and a Row cannot be split
       // across pages. 24 questions with three working lines overflowed A4 and

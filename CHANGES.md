@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 27.
+Baseline when copied: 24 tests passing. Now: 29.
 
 ---
 
@@ -104,7 +104,36 @@ replaces the `typical_class` hint when a chapter is known.
 If this is ported, note the app has no curriculum file, so both stay null
 there and nothing changes.
 
-## 5. Removed, not ported
+## 5. Stacked sums, the way an Indian exercise book sets them out
+
+`lib/src/worksheet.dart`
+
+Sums were printed as a line of text - "75 + 26 = ?" - with ruled lines under
+them. Indian primary sheets stack the two numbers right aligned, put the
+operator to the left of the lower one, and rule underneath. That rule *is* the
+answer line, so the extra ruled lines were in the way.
+
+`ColumnSum.tryParse` recognises a bare `a + b`, `a - b` or `a x b` and nothing
+else. Every parse is checked against the answer the generator produced: if the
+sum read off the prompt does not give that answer, the prompt is not the sum it
+appears to be and the question falls back to the ordinary layout. A sheet is
+all one shape or all the other, since a boxed column sum beside a line of prose
+reads like a mistake.
+
+Division is deliberately excluded. It is written under a division bracket, not
+stacked, and long division needs the ruled working lines anyway.
+
+`answerSpace` scales with the operator: 22pt for a sum or difference, but a
+two-digit multiplier gets 52pt, because the child writes a partial product per
+digit and then adds them. A card sized for one answer sends that working into
+the margin.
+
+The name row became a band with Name, Date and a boxed Score.
+
+Three tests cover the parser, including that it rejects division, word
+problems, and any sum that disagrees with its own answer key.
+
+## 6. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
