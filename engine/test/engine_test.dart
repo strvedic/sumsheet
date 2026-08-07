@@ -437,6 +437,34 @@ void main() {
   });
 
   group('worksheets', () {
+    test('nothing a generator prints is silently dropped by the PDF font', () {
+      // The PDF's built-in font covers CP1252 and drops anything else without
+      // a word. Counting questions used to write their objects as U+25CF, so
+      // every printed counting sheet said "How many do you see?" with nothing
+      // to see - eight times over, with no error anywhere.
+      //
+      // A prompt may still carry such a character, but only if the worksheet
+      // draws that question instead of typesetting it.
+      final offenders = <String, String>{};
+      for (final skill in map.all.where(hasGenerator)) {
+        for (var d = 1; d <= 5; d++) {
+          for (var seed = 0; seed < 25; seed++) {
+            final q = generateQuestion(skill: skill, difficulty: d, seed: seed);
+            // pdfSafe is what the sheet actually prints - it rewrites the
+            // few characters the engine emits that the font cannot draw.
+            final bad = unprintableInPdf(pdfSafe(q.prompt));
+            if (bad.isEmpty) continue;
+            if (PictureCount.tryParse(q) != null) continue;
+            offenders[skill.id] = bad;
+          }
+        }
+      }
+      expect(offenders, isEmpty,
+          reason: 'these prompts would print with characters missing: '
+              '$offenders');
+    });
+
+
     test('a plain sum is recognised as a stacked one, and nothing else is', () {
       ColumnSum? parse(String prompt, String answer) => ColumnSum.tryParse(
             Question(

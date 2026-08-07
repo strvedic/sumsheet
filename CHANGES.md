@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 29.
+Baseline when copied: 24 tests passing. Now: 30.
 
 ---
 
@@ -133,7 +133,53 @@ The name row became a band with Name, Date and a boxed Score.
 Three tests cover the parser, including that it rejects division, word
 problems, and any sum that disagrees with its own answer key.
 
-## 6. Removed, not ported
+## 6. Counting sheets printed nothing to count
+
+`lib/src/worksheet.dart`, `lib/src/question.dart` (no change), test added
+
+`count_objects` writes its objects into the prompt as U+25CF dots. The PDF's
+built-in font covers CP1252 and drops everything outside it **silently** - no
+exception, no warning - so every printed counting sheet read:
+
+    1.  How many do you see?
+    2.  How many do you see?
+
+eight times, with nothing to see and nothing to answer. On screen the app
+renders with a real font, so this only ever showed up in print.
+
+**This affects the shipped app's worksheet export.** It is the worst of the
+bugs found here, because it fails in the hands of a five-year-old and reports
+nothing to anyone.
+
+`PictureCount.tryParse` now recognises those questions and the worksheet draws
+the objects as vector circles, sized for a young child to count with a finger
+and immune to whatever the font does or does not contain. It only triggers when
+the number of dots equals the answer, so a question that merely mentions a dot
+is left alone.
+
+The same reasoning answers whether emoji could be used for the younger classes:
+not through the font - they have no glyph here at all, and on the mono printers
+these sheets are actually printed on they would come out as grey mush. Drawn
+shapes are both printable and controllable.
+
+**Guard added:** `unprintableInPdf(String)` plus a test that runs every
+generator at every difficulty and fails if anything it would typeset cannot be
+drawn. It immediately found a second case, `real-numbers` emitting a raw root
+sign; that one was already handled by `pdfSafe`, which the test now applies
+before checking. Port this test with the fix - it is what stops the class of
+bug, not just this instance.
+
+## 7. Printed in black and white
+
+Worksheets are printed at home or at a corner shop, and almost always in mono.
+The navy rules, tan question numbers and pale blue band all read well on screen
+and turned to indistinct grey on a laser printer.
+
+The palette is now greyscale throughout, chosen at the grey values rather than
+left to the printer to derive. Verified: every ink colour in a generated sheet
+has R = G = B.
+
+## 8. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

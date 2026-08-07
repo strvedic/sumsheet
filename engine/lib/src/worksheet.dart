@@ -53,13 +53,15 @@ String pdfSafe(String s) {
 }
 
 
-// The sheet's colours, kept together so a whole worksheet can be restyled in
-// one place rather than hunted through the widget tree.
-const _rule = PdfColor.fromInt(0xFF1F3864);
-const _bandFill = PdfColor.fromInt(0xFFF2F5FA);
-const _bandEdge = PdfColor.fromInt(0xFFD6DEEA);
-const _numberLabel = PdfColor.fromInt(0xFFB8945A);
-const _cardEdge = PdfColor.fromInt(0xFFDCE0E6);
+// Greyscale on purpose. These sheets are printed at home or at a corner shop,
+// almost always in black and white, and a colour that reads well on screen
+// turns into an indistinct grey on a mono laser printer. Choosing the greys
+// here means the printed sheet looks the way it was designed to.
+const _rule = PdfColor.fromInt(0xFF000000);
+const _bandFill = PdfColor.fromInt(0xFFF2F2F2);
+const _bandEdge = PdfColor.fromInt(0xFFC4C4C4);
+const _numberLabel = PdfColor.fromInt(0xFF6E6E6E);
+const _cardEdge = PdfColor.fromInt(0xFFB4B4B4);
 
 /// One question written the way it is set out in an Indian exercise book: the
 /// two numbers stacked and right aligned, the operator to the left of the lower
@@ -115,6 +117,67 @@ class ColumnSum {
 
   /// The widest operand, which decides how many fit across the page.
   int get width => left.length > right.length ? left.length : right.length;
+}
+
+/// Characters the PDF's built-in font cannot draw.
+///
+/// That font covers CP1252 and silently drops everything else - no exception,
+/// no warning, just missing text on a sheet already handed to a child. Use this
+/// to find out before printing rather than after.
+String unprintableInPdf(String s) {
+  // The scattered extras CP1252 puts in 0x80-0x9F, where Latin-1 has controls.
+  const extras = '€‚ƒ„…†‡ˆ'
+      '‰Š‹ŒŽ‘’“”•'
+      '–—˜™š›œžŸ';
+  final out = StringBuffer();
+  for (final r in s.runes) {
+    final ok = (r >= 0x20 && r <= 0x7e) ||
+        (r >= 0xa0 && r <= 0xff) ||
+        r == 0x0a ||
+        r == 0x09 ||
+        extras.runes.contains(r);
+    if (!ok) out.writeCharCode(r);
+  }
+  return out.toString();
+}
+
+/// A counting question, with the objects to be counted.
+///
+/// The generator writes the objects as U+25CF dots straight into the prompt.
+/// That works on screen, but the PDF's built-in font covers CP1252 only, and
+/// characters outside it are dropped **silently** - so every counting sheet
+/// printed "How many do you see?" with nothing to see, eight times over, and
+/// nothing anywhere reported an error.
+///
+/// The fix is not another character. It is to stop relying on the font for
+/// pictures and draw them: circles a five-year-old can actually count, at a
+/// size a font would never give, in plain black that survives a mono printer.
+/// The same reasoning rules out emoji, which have no glyph here at all and
+/// would print as grey mush even where they do.
+class PictureCount {
+  const PictureCount(this.question, this.count);
+
+  /// The words, with the row of dots taken out.
+  final String question;
+
+  /// How many objects to draw.
+  final int count;
+
+  static PictureCount? tryParse(Question q) {
+    const dot = '●';
+    final count = dot.allMatches(q.prompt).length;
+    if (count == 0) return null;
+    // Only when the objects ARE the answer. A question that happens to mention
+    // a dot but asks something else must not be redrawn.
+    if (int.tryParse(q.answer.trim()) != count) return null;
+    final words = q.prompt
+        .split(RegExp('[\r\n]+'))
+        .where((line) => !line.contains(dot))
+        .join(' ')
+        .trim();
+    if (words.isEmpty) return null;
+    return PictureCount(words, count);
+  }
 }
 
 /// Builds a printable worksheet PDF for one skill.
@@ -266,7 +329,7 @@ class WorksheetBuilder {
               style: pw.TextStyle(
                 fontSize: 15,
                 fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey800,
+                color: PdfColors.grey800,
               ),
             ),
             pw.SizedBox(height: 3),
@@ -438,6 +501,100 @@ class WorksheetBuilder {
     ];
   }
 
+  /// Every question as a counting picture, or null if any of them is not one.
+  List<PictureCount>? get _asPictureCounts {
+    final out = <PictureCount>[];
+    for (final q in questions) {
+      final p = PictureCount.tryParse(q);
+      if (p == null) return null;
+      out.add(p);
+    }
+    return out;
+  }
+
+  /// Counting cards: the words, the objects drawn large enough to count with a
+  /// finger, and a box to write the number in.
+  List<pw.Widget> _pictureCards(List<PictureCount> counts) {
+    pw.Widget card(int i) {
+      final p = counts[i];
+      return pw.Container(
+        padding: const pw.EdgeInsets.fromLTRB(11, 7, 11, 10),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: _cardEdge, width: 0.8),
+          borderRadius: pw.BorderRadius.circular(4),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              '${i + 1}.',
+              style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: _numberLabel,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(pdfSafe(p.question),
+                style: const pw.TextStyle(fontSize: 10.5)),
+            pw.SizedBox(height: 9),
+            pw.Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                for (var n = 0; n < p.count; n++)
+                  pw.Container(
+                    width: 13,
+                    height: 13,
+                    decoration: const pw.BoxDecoration(
+                      color: _rule,
+                      shape: pw.BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+            pw.SizedBox(height: 11),
+            pw.Row(
+              children: [
+                pw.Text('Answer',
+                    style: const pw.TextStyle(fontSize: 9.5, color: _numberLabel)),
+                pw.SizedBox(width: 7),
+                pw.Container(
+                  width: 34,
+                  height: 22,
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: _rule, width: 0.8),
+                    borderRadius: pw.BorderRadius.circular(3),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Three across: ten dots plus a box needs more width than a two-digit sum.
+    return [
+      for (var i = 0; i < counts.length; i += 3)
+        pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 11),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              for (var col = 0; col < 3; col++) ...[
+                if (col > 0) pw.SizedBox(width: 11),
+                pw.Expanded(
+                  child:
+                      i + col < counts.length ? card(i + col) : pw.SizedBox(),
+                ),
+              ],
+            ],
+          ),
+        ),
+    ];
+  }
+
   /// The questions, as separate widgets so a long sheet can flow onto page 2.
   ///
   /// Returning one widget for the whole grid used to throw: a two-column Row
@@ -451,6 +608,9 @@ class WorksheetBuilder {
   List<pw.Widget> _questionRows() {
     final sums = _asColumnSums;
     if (sums != null) return _columnCards(sums);
+
+    final pictures = _asPictureCounts;
+    if (pictures != null) return _pictureCards(pictures);
 
     // Prompts that span multiple lines (word problems, ordering questions)
     // need the full width; short sums do not.
