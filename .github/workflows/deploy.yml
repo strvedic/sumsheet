@@ -45,12 +45,15 @@ jobs:
           flutter analyze
           flutter test
 
-      # The site lives at strvedic.github.io/sumsheet/, not at the root of the
-      # domain, so every asset path needs that prefix. Without it the page
-      # loads and then fails to find anything.
+      # The site lives at the root of sumsheet.aardhututoring.in, so asset
+      # paths need no prefix. This was /sumsheet/ while the site was served
+      # from strvedic.github.io/sumsheet/ - get this wrong against the domain
+      # in web/CNAME and the page loads, then every asset 404s, and what the
+      # teacher sees is a blank white screen with nothing in the console to
+      # explain it.
       - name: Build
         working-directory: app
-        run: flutter build web --release --base-href /sumsheet/
+        run: flutter build web --release --base-href /
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
