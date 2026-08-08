@@ -620,37 +620,90 @@ void registerArithmetic() {
     final d = c.int_(2, 9);
     final e = c.int_(2, 6);
     final prod = b * d;
-    if (c.difficulty <= 2) {
-      final ans = a + prod;
-      return Question(
-        skillId: c.skillId,
-        prompt: '$a + $b x $d = ?',
-        answer: '$ans',
-        difficulty: c.difficulty,
-        choices: c.choicesAround(ans, distractors: [(a + b) * d, a + b + d]),
-        steps: [
-          'Multiplication comes before addition.',
-          '$b x $d = $prod.',
-          '$a + $prod = $ans.',
-        ],
-        hint: 'BODMAS - do the multiplication first, not left to right.',
-      );
-    }
     final divTotal = e * c.int_(2, 6);
-    final ans = a + prod - (divTotal ~/ e);
-    return Question(
-      skillId: c.skillId,
-      prompt: '$a + $b x $d - $divTotal / $e = ?',
-      answer: '$ans',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(ans, distractors: [(a + b) * d, ans + e]),
-      steps: [
-        'BODMAS: division and multiplication first, left to right.',
-        '$b x $d = $prod, and $divTotal / $e = ${divTotal ~/ e}.',
-        'Now $a + $prod - ${divTotal ~/ e} = $ans.',
-      ],
-      hint: 'Do x and / before + and -.',
-    );
+    final quot = divTotal ~/ e;
+
+    // The B in BODMAS was never on the sheet. Every question was the same
+    // a + b x d - e / f, so a child could get twenty right by always doing the
+    // multiplication first, and never once meet a bracket that overrides it -
+    // which is the rule the chapter is named after.
+    //
+    // The bracketed pair is deliberately available from the easiest level. Two
+    // questions on the same numbers, one with a bracket and one without, IS
+    // the lesson - and the easy levels used to return before reaching any of
+    // this, so a Class 7 sheet at Easiest was twenty of "a + b x d".
+    switch (c.difficulty <= 2 ? c.pick(const [0, 1]) : c.variantByLevel(3)) {
+      case 0:
+        // Short at the easy levels, with the division added once the two-step
+        // version is comfortable.
+        if (c.difficulty <= 2) {
+          final ans = a + prod;
+          return Question(
+            skillId: c.skillId,
+            prompt: '$a + $b x $d = ?',
+            answer: '$ans',
+            difficulty: c.difficulty,
+            choices: c.choicesAround(ans, distractors: [(a + b) * d, a + b + d]),
+            steps: [
+              'Multiplication comes before addition.',
+              '$b x $d = $prod.',
+              '$a + $prod = $ans.',
+            ],
+            hint: 'BODMAS - do the multiplication first, not left to right.',
+          );
+        }
+        final ans = a + prod - quot;
+        return Question(
+          skillId: c.skillId,
+          prompt: '$a + $b x $d - $divTotal / $e = ?',
+          answer: '$ans',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ans, distractors: [(a + b) * d, ans + e]),
+          steps: [
+            'BODMAS: division and multiplication first, left to right.',
+            '$b x $d = $prod, and $divTotal / $e = $quot.',
+            'Now $a + $prod - $quot = $ans.',
+          ],
+          hint: 'Do x and / before + and -.',
+        );
+      case 1:
+        // The bracket changes the answer. Printed next to the same numbers
+        // without it, this is the question that shows what brackets are for.
+        final ans = (a + b) * d;
+        return Question(
+          skillId: c.skillId,
+          prompt: '($a + $b) x $d = ?',
+          answer: '$ans',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ans, distractors: [a + b * d, a + b + d]),
+          steps: [
+            'Brackets come first - that is the B in BODMAS.',
+            '$a + $b = ${a + b}.',
+            '${a + b} x $d = $ans.',
+          ],
+          hint: 'Without the bracket you would multiply first. With it, you '
+              'do not.',
+        );
+      default:
+        // A bracket inside the working, so the order has to be held in mind
+        // rather than read off left to right.
+        final ans = divTotal ~/ e + b * (a + d);
+        return Question(
+          skillId: c.skillId,
+          prompt: '$divTotal / $e + $b x ($a + $d) = ?',
+          answer: '$ans',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ans,
+              distractors: [(divTotal ~/ e + b) * (a + d), quot + b + a + d]),
+          steps: [
+            'Brackets first: $a + $d = ${a + d}.',
+            'Then divide and multiply: $divTotal / $e = $quot, and '
+                '$b x ${a + d} = ${b * (a + d)}.',
+            'Add last: $quot + ${b * (a + d)} = $ans.',
+          ],
+          hint: 'Bracket, then x and /, then + and -.',
+        );
+    }
   });
 }
 

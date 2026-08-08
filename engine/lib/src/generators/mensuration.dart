@@ -63,8 +63,9 @@ void registerMensuration() {
       prompt: phrase == 'quarter to'
           ? 'Write $shown in words, using "quarter to".\n\n'
               'Which hour comes after "quarter to"?'
+          // "half past 7" answers 7:30, and the example used to say 7:30.
           : 'What is the time $phrase $hour, written in numbers? '
-              '(like 7:30)',
+              '(like ${formatExample(shown, const ['7:30', '9:15'])})',
       answer: phrase == 'quarter to' ? '$displayHour' : shown,
       difficulty: c.difficulty,
       steps: phrase == 'quarter to'
@@ -77,28 +78,98 @@ void registerMensuration() {
   });
 
   register('time_calc', (c) {
-    final startH = c.int_(1, 20);
-    final startM = c.pick([0, 10, 15, 20, 30, 40, 45, 50]);
+    // Three questions, not one. A timetable gives you two of {start, duration,
+    // end} and asks for the third, and which one is missing changes the sum
+    // completely: finding the end is an addition, finding how long it took is
+    // a subtraction across the hour, and finding the start means working
+    // backwards. Asking only for the arrival time made a whole chapter on
+    // reading a timetable into twenty of the same addition.
     final durH = c.int_(1, c.band(2, 5));
-    final durM = c.pick([0, 10, 15, 20, 30, 40, 45]);
+    // Never past midnight. The clock used to wrap, so a 5-hour journey from
+    // 20:50 "arrived" at 1:30 - right by the arithmetic and a horrible thing
+    // to put in front of a Class 5 child, especially now the sheet also asks
+    // how long a journey from 20:50 to 1:30 took.
+    final startH = c.int_(1, 21 - durH);
+    final startM = c.pick([0, 10, 15, 20, 30, 40, 45, 50]);
+    // The carry across 60 is the whole difficulty of time arithmetic - a child
+    // who can do 3:20 + 1h 30m confidently still writes 3:70. So the level
+    // decides whether the minutes cross the hour, rather than deciding which
+    // of the three questions gets asked: finding the duration is not harder
+    // than finding the arrival, it is a different question, and a sheet wants
+    // all three of them.
+    const durMinutes = [0, 10, 15, 20, 30, 40, 45];
+    final wantCarry = c.difficulty >= 4 || (c.difficulty == 3 && c.coin());
+    final carrying =
+        durMinutes.where((m) => (startM + m >= 60) == wantCarry).toList();
+    // Empty when the start is on the hour and a carry was wanted: nothing in
+    // the list can reach 60 from there.
+    final durM = c.pick(carrying.isEmpty ? durMinutes : carrying);
     final totalMin = startH * 60 + startM + durH * 60 + durM;
     final endH = (totalMin ~/ 60) % 24;
     final endM = totalMin % 60;
     String fmt(int h, int m) => '$h:${m.toString().padLeft(2, '0')}';
-    return Question(
-      skillId: c.skillId,
-      prompt: 'A train leaves at ${fmt(startH, startM)} and the journey takes '
-          '${durH}h ${durM}m.\n\nWhat time does it arrive? (like 7:30)',
-      answer: fmt(endH, endM),
-      difficulty: c.difficulty,
-      steps: [
-        'Add the hours: $startH + $durH = ${startH + durH}.',
-        'Add the minutes: $startM + $durM = ${startM + durM}'
-            '${startM + durM >= 60 ? ', which is over 60 so carry an hour' : ''}.',
-        'Arrival: ${fmt(endH, endM)}.',
-      ],
-      hint: '60 minutes make an hour - watch for the carry.',
-    );
+    final start = fmt(startH, startM);
+    final end = fmt(endH, endM);
+    final borrows = startM + durM >= 60;
+    // Both of these are real possible answers here, so the example shown has
+    // to be picked against the answer rather than hardcoded.
+    String clockEg(String answer) =>
+        formatExample(answer, const ['7:30', '9:15']);
+    final spanEg = formatExample('${durH}h ${durM}m', const ['2h 30m', '3h 15m']);
+
+    switch (c.pick(const [0, 1, 2])) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A train leaves at $start and the journey takes '
+              '${durH}h ${durM}m.\n\nWhat time does it arrive? '
+              '(like ${clockEg(end)})',
+          answer: end,
+          difficulty: c.difficulty,
+          steps: [
+            'Add the hours: $startH + $durH = ${startH + durH}.',
+            'Add the minutes: $startM + $durM = ${startM + durM}'
+                '${borrows ? ', which is over 60 so carry an hour' : ''}.',
+            'Arrival: $end.',
+          ],
+          hint: '60 minutes make an hour - watch for the carry.',
+        );
+      case 1:
+        // How long it took. The subtraction has to borrow 60, not 10, which is
+        // the single thing children get wrong about time.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A train leaves at $start and arrives at $end.\n\n'
+              'How long is the journey? (like $spanEg)',
+          answer: '${durH}h ${durM}m',
+          difficulty: c.difficulty,
+          steps: [
+            'Count on from $start to the hour, then on to $end.',
+            borrows
+                ? 'The minutes need an hour broken up: borrow 60 minutes, not '
+                    '10.'
+                : 'Minutes: $endM - $startM = $durM.',
+            'That is ${durH}h ${durM}m.',
+          ],
+          hint: 'When you borrow from the hours, you get 60 minutes, not 10.',
+        );
+      default:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A train arrives at $end after a journey of '
+              '${durH}h ${durM}m.\n\nWhat time did it leave? '
+              '(like ${clockEg(start)})',
+          answer: start,
+          difficulty: c.difficulty,
+          steps: [
+            'Going backwards, take the journey off the arrival time.',
+            'Hours: $endH - $durH. Minutes: $endM - $durM'
+                '${borrows ? ', borrowing 60 minutes from an hour' : ''}.',
+            'It left at $start.',
+          ],
+          hint: 'Work backwards from the arrival time.',
+        );
+    }
   });
 
   register('perimeter', (c) {
@@ -271,3 +342,12 @@ void registerMensuration() {
     );
   });
 }
+
+/// A "write it like this" example that is never the answer it illustrates.
+///
+/// "(like 2h 30m)" printed on a question whose answer *is* 2h 30m hands the
+/// answer over in the prompt - the same fault the remainder questions had when
+/// they showed "write your answer like 9 R 2" above a sum whose answer was
+/// 9 R 2. A format example has to be readable and wrong.
+String formatExample(String answer, List<String> options) =>
+    options.firstWhere((o) => o != answer, orElse: () => options.last);

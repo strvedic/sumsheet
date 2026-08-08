@@ -277,21 +277,100 @@ void registerRatioAlgebra() {
   // ----------------------------------------------------------------- algebra
 
   register('patterns', (c) {
-    final start = c.int_(1, c.band(9, 30));
+    // A patterns chapter is about seeing the rule, not about adding on. This
+    // used to ask "what is the next term?" and nothing else, so a
+    // twenty-question sheet was the same sentence twenty times over - and a
+    // child who has spotted the gap once is not learning anything by the
+    // fourth. The rule, the gap in the middle, and counting backwards are the
+    // same idea approached from the sides.
     final step = c.int_(2, c.band(6, 15));
-    final seq = List.generate(5, (i) => start + i * step);
-    return Question(
-      skillId: c.skillId,
-      prompt: 'What is the next term?\n\n${seq.take(4).join(', ')}, __',
-      answer: '${seq[4]}',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(seq[4], distractors: [seq[4] + step, seq[4] - step]),
-      steps: [
-        'Find the difference: ${seq[1]} - ${seq[0]} = $step.',
-        'Add $step to the last term: ${seq[3]} + $step = ${seq[4]}.',
-      ],
-      hint: 'Look at the gap between each pair of terms.',
-    );
+    // One whole step clear of zero, so the "what came before the first term?"
+    // variant never runs off the bottom. Starting at 1 with a step of 6 asks a
+    // Class 4 child for -5, which is not in this chapter or anywhere near it.
+    final start = step + c.int_(1, c.band(9, 30));
+    // Counting down is harder than counting up and only worth asking once a
+    // child is steady going up.
+    final down = c.difficulty >= 3 && c.coin();
+    final terms = List.generate(
+        5, (i) => down ? start + (4 - i) * step : start + i * step);
+    final rule = down ? 'goes down by $step' : 'goes up by $step';
+
+    switch (c.variantByLevel(4)) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What is the next term?\n\n${terms.take(4).join(', ')}, __',
+          answer: '${terms[4]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(terms[4],
+              distractors: [terms[4] + step, terms[4] - step]),
+          steps: [
+            'Find the difference: ${terms[1]} - ${terms[0]} = ${terms[1] - terms[0]}.',
+            'The pattern $rule.',
+            '${terms[3]} ${down ? '-' : '+'} $step = ${terms[4]}.',
+          ],
+          hint: 'Look at the gap between each pair of terms.',
+        );
+      case 1:
+        // The gap in the middle. A child who has only ever continued a pattern
+        // reads left to right and stops; this one has to be worked from both
+        // sides, which is what shows they have the rule rather than the habit.
+        final at = c.int_(1, 3);
+        final shown = [
+          for (var i = 0; i < 5; i++) i == at ? '__' : '${terms[i]}',
+        ];
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Fill in the gap:\n\n${shown.join(', ')}',
+          answer: '${terms[at]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(terms[at],
+              distractors: [terms[at] + step, terms[at] - step]),
+          steps: [
+            'The pattern $rule.',
+            '${terms[at - 1]} ${down ? '-' : '+'} $step = ${terms[at]}.',
+            'Check forwards: ${terms[at]} ${down ? '-' : '+'} $step = '
+                '${terms[at + 1]}.',
+          ],
+          hint: 'Work it out from the term before, then check with the one '
+              'after.',
+        );
+      case 2:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What is the rule for this pattern?\n\n'
+              '${terms.join(', ')}\n\n'
+              'Answer with a number, and write it as -$step if it goes down.',
+          answer: '${down ? -step : step}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(down ? -step : step,
+              distractors: [step, -step, terms[0]]),
+          steps: [
+            'Take any term away from the one after it.',
+            '${terms[1]} - ${terms[0]} = ${terms[1] - terms[0]}.',
+            'Every step is the same, so the rule is ${terms[1] - terms[0]}.',
+          ],
+          hint: 'Subtract one term from the next.',
+        );
+      default:
+        // Backwards past the start. The rule has to be undone rather than
+        // repeated, which is the first step towards solving for a term.
+        final before = terms[0] - (down ? -step : step);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What term comes BEFORE the first one?\n\n'
+              '__, ${terms.take(4).join(', ')}',
+          answer: '$before',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(before,
+              distractors: [terms[0] + step, terms[0], before - step]),
+          steps: [
+            'The pattern $rule, so going backwards you do the opposite.',
+            '${terms[0]} ${down ? '+' : '-'} $step = $before.',
+          ],
+          hint: 'Going backwards, do the opposite of the rule.',
+        );
+    }
   });
 
   register('like_terms', (c) {

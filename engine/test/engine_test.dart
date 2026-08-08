@@ -472,6 +472,63 @@ void main() {
       }
     });
 
+    test('chapters whose topic has several ideas ask about more than one', () {
+      // A named list, not every skill, because repetition is not always a
+      // fault: twenty of "68 + 48 = ?" is what a Class 2 addition sheet is
+      // FOR, and it prints as a grid of stacked column sums. These four are
+      // different - each one is a whole chapter's topic, and each used to ask
+      // exactly one question twenty times over. A patterns sheet that only
+      // ever says "what is the next term?" teaches the habit, not the rule.
+      const leastTemplates = {
+        'patterns': 3,
+        'time-calc': 3,
+        'bodmas': 2,
+        'relations-functions': 3,
+      };
+      for (final entry in leastTemplates.entries) {
+        for (var d = 1; d <= 5; d++) {
+          final qs = generatePractice(
+              skill: map[entry.key], count: 20, difficulty: d, seed: 11);
+          // A template is the question with its numbers taken out - which is
+          // what a child sees when a sheet looks samey.
+          final templates = qs
+              .map((q) => q.prompt
+                  .replaceAll(RegExp(r'\d+'), '#')
+                  .replaceAll(RegExp(r'\s+'), ' '))
+              .toSet();
+          expect(templates.length, greaterThanOrEqualTo(entry.value),
+              reason: '${entry.key} at level $d gives a 20-question sheet with '
+                  'only ${templates.length} kinds of question: '
+                  '${templates.join(" | ")}');
+        }
+      }
+    });
+
+    test('a time question never runs past midnight', () {
+      // The clock wrapped, so a five-hour journey from 20:50 "arrived" at
+      // 1:30. Right by the arithmetic, and a horrible thing to hand a Class 5
+      // child - especially once the sheet also asks how long that journey was.
+      final time = RegExp(r'(\d+):(\d\d)');
+      for (var d = 1; d <= 5; d++) {
+        for (var seed = 0; seed < 120; seed++) {
+          final q =
+              generateQuestion(skill: map['time-calc'], difficulty: d, seed: seed);
+          // Only this variant prints its two times in chronological order; in
+          // the others the answer supplies the earlier one. The "(like 7:30)"
+          // example is not one of the question's times at all.
+          final body = q.prompt.split('(like').first;
+          if (!body.contains('and arrives at')) continue;
+          final times = time
+              .allMatches(body)
+              .map((m) =>
+                  int.parse(m.group(1)!) * 60 + int.parse(m.group(2)!))
+              .toList();
+          expect(times[1], greaterThan(times[0]),
+              reason: 'this journey crosses midnight: ${q.prompt}');
+        }
+      }
+    });
+
     test('same seed reproduces the identical question', () {
       for (final skill in map.all.where(hasGenerator).take(20)) {
         final a = generateQuestion(skill: skill, difficulty: 3, seed: 12345);

@@ -55,27 +55,91 @@ void registerAdvanced() {
   });
 
   register('functions', (c) {
+    // Substituting into f(x) is one thing a Class 11 functions chapter does,
+    // and it used to be the only thing on the sheet. Running the function
+    // backwards, composing two of them, and finding where a denominator dies
+    // are the rest of the chapter, and each one fails differently - which is
+    // the point of asking.
     final a = c.int_(2, c.band(4, 9));
     final b = c.int_(1, c.band(5, 15));
     final x = c.int_(2, c.band(5, 12));
-    final squared = c.difficulty >= 4;
-    final ans = squared ? a * x * x + b : a * x + b;
-    return Question(
-      skillId: c.skillId,
-      prompt: squared
-          ? 'If f(x) = ${a}x^2 + $b, find f($x).'
-          : 'If f(x) = ${a}x + $b, find f($x).',
-      answer: '$ans',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(ans, distractors: [a * x + b, a + b + x]),
-      steps: [
-        'f($x) means put $x wherever you see x.',
-        squared
-            ? '$a x $x^2 + $b = $a x ${x * x} + $b = $ans.'
-            : '$a x $x + $b = ${a * x} + $b = $ans.',
-      ],
-      hint: 'Just replace every x with $x.',
-    );
+
+    switch (c.variantByLevel(4)) {
+      case 0:
+        final squared = c.difficulty >= 4;
+        final ans = squared ? a * x * x + b : a * x + b;
+        return Question(
+          skillId: c.skillId,
+          prompt: squared
+              ? 'If f(x) = ${a}x^2 + $b, find f($x).'
+              : 'If f(x) = ${a}x + $b, find f($x).',
+          answer: '$ans',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ans, distractors: [a * x + b, a + b + x]),
+          steps: [
+            'f($x) means put $x wherever you see x.',
+            squared
+                ? '$a x $x^2 + $b = $a x ${x * x} + $b = $ans.'
+                : '$a x $x + $b = ${a * x} + $b = $ans.',
+          ],
+          hint: 'Just replace every x with $x.',
+        );
+      case 1:
+        // Backwards: given the output, find the input. Same function, opposite
+        // direction, and it is where students first meet the idea of undoing.
+        final out = a * x + b;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'If f(x) = ${a}x + $b and f(k) = $out, find k.',
+          answer: '$x',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(x, distractors: [out - b, out ~/ a, a + b]),
+          steps: [
+            'Write it out: $a k + $b = $out.',
+            'Take $b off both sides: $a k = ${out - b}.',
+            'Divide by $a: k = $x.',
+          ],
+          hint: 'Undo the function: subtract first, then divide.',
+        );
+      case 2:
+        // Composition. The whole difficulty is that g runs first even though f
+        // is written first, and nothing else on the sheet tests that.
+        final g = c.int_(1, c.band(4, 9));
+        final inner = x + g;
+        final ans = a * inner + b;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'If f(x) = ${a}x + $b and g(x) = x + $g,\n\n'
+              'find f(g($x)).',
+          answer: '$ans',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(ans,
+              distractors: [a * x + b + g, (a * x + b) + g, a * x + g]),
+          steps: [
+            'Work from the inside out: g runs first.',
+            'g($x) = $x + $g = $inner.',
+            'Now f($inner) = $a x $inner + $b = $ans.',
+          ],
+          hint: 'g goes first, even though f is written first.',
+        );
+      default:
+        // Domain. The answer is the one value that breaks the function, which
+        // is a different kind of question from anything above it.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'For f(x) = 1 / (x - $b), which value of x must be left out '
+              'of the domain?',
+          answer: '$b',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(b, distractors: [-b, 0, b + 1]),
+          steps: [
+            'A fraction has no value when its bottom is zero.',
+            'x - $b = 0 when x = $b.',
+            'So the domain is every real number except $b.',
+          ],
+          hint: 'What would make the bottom of the fraction zero?',
+        );
+    }
   });
 
   register('perm_comb', (c) {

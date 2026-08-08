@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 37.
+Baseline when copied: 24 tests passing. Now: 39.
 
 ---
 
@@ -445,7 +445,71 @@ solutions on, so the steps of every reachable skill get put on paper once per
 run. That is what catches a dropped glyph: the PDF library warns and builds the
 sheet quite happily.
 
-## 16. Removed, not ported
+## 16. Four generators that knew one sentence
+
+`generators/ratio_algebra.dart`, `mensuration.dart`, `arithmetic.dart`,
+`advanced.dart`
+
+Measured first, and the measurement changed the plan. Counting *skills per
+chapter* says nothing: Class 2 "Decoration for Festival" has four skills and
+still only two question shapes, because all four write `a + b = ?`. Counting
+**templates** - the prompt with its numbers blanked out - finds the real thing.
+
+And most of what that flagged is not a fault. Twenty of `68 + 48 = ?` is what a
+Class 2 addition sheet is *for*, and it prints as a grid of stacked column
+sums. Only four skills were genuinely a whole chapter's topic asked as one
+question:
+
+| Skill | Templates before | After |
+|---|---|---|
+| `patterns` | 1 | 5 |
+| `relations-functions` | 1 | 3 |
+| `time-calc` | 1 | 3 |
+| `bodmas` | 1 | 2 |
+
+- **`patterns`** only ever asked "what is the next term?". Added the gap in the
+  middle (has to be worked from both sides, which is what shows the rule rather
+  than the habit), naming the rule, and the term *before* the first - which
+  means undoing the rule instead of repeating it. Sequences now also count
+  down, from difficulty 3.
+- **`time-calc`** only asked for the arrival time. A timetable gives you two of
+  {start, duration, end}: finding the end is an addition, finding the duration
+  is a subtraction across the hour, finding the start is working backwards. All
+  three now appear on every sheet, and the **level controls the carry across
+  60** instead of which question gets asked - because finding a duration is not
+  harder than finding an arrival, it is a different question. Measured: minutes
+  cross the hour in 0% of questions at level 1, 31% at 3, 72% at 5.
+- **`bodmas`** always printed `a + b x d - e / f`, so a child could score
+  twenty out of twenty by always multiplying first and never once meet a
+  bracket that overrides it - the rule the chapter is named after. `(a + b) x d`
+  is now available from the easiest level, deliberately: the same numbers with
+  and without a bracket *is* the lesson.
+- **`functions`** only substituted into `f(x)`. Added solving `f(k) = n`
+  backwards, composition `f(g(x))` (where the difficulty is that g runs first
+  though f is written first), and the domain of `1/(x-a)`.
+
+**Two bugs found while doing it, both by tests rather than by reading:**
+
+- The existing `a question never prints its own answer` test caught
+  `"How long is the journey? (like 2h 30m)"` on a question whose answer *was*
+  2h 30m - the same fault the remainder questions had with "like 9 R 2". Added
+  `formatExample(answer, options)`, which picks a worked example that is never
+  the answer it illustrates, and applied it to the `(like 7:30)` prompts too,
+  where `clock` and `time_calc` could both collide.
+- Journeys **crossed midnight**: `startH` went to 20 and `durH` to 5, and the
+  clock wrapped, so a train left at 20:50 and "arrived" at 1:30. Correct
+  arithmetic, awful question - and much worse once the sheet started asking how
+  long that journey took. `startH` is now bounded by the duration.
+
+**Tests added:** `chapters whose topic has several ideas ask about more than
+one` (a named list, since repetition is right for drill skills) and `a time
+question never runs past midnight`.
+
+Every `bodmas` prompt was also re-evaluated by an independent
+recursive-descent parser honouring brackets and precedence - 1500 checked, 0
+disagreed with their own answer.
+
+## 17. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
