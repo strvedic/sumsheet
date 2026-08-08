@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'engine_api.dart';
 import 'question.dart';
 import 'skill_map.dart';
+import 'worksheet_diagram.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -13,14 +14,17 @@ import 'package:pdf/widgets.dart' as pw;
 /// "y = 5x⁴" would print as "y = 5x" - wrong maths, silently, on a sheet handed
 /// to a child.
 ///
-/// Runs made only of ¹²³ are kept, because those render properly and cover most
-/// school maths. Anything else falls back to plain notation.
+/// Every superscript therefore comes back to plain "^n" notation, ¹²³
+/// included. Keeping the three that happen to have glyphs used to look like
+/// the careful choice, but it meant one sheet printed "x²" a centimetre from
+/// "x^4" - two spellings of the same idea, and the child has to work out that
+/// they are the same idea. [mathSpans] raises them all afterwards, by drawing
+/// rather than by hoping the font has the character.
 String pdfSafe(String s) {
   const supToDigit = {
     '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
     '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁻': '-',
   };
-  const renderable = {'¹', '²', '³'};
 
   final buf = StringBuffer();
   var i = 0;
@@ -31,25 +35,65 @@ String pdfSafe(String s) {
       i++;
       continue;
     }
-    // Grab the whole superscript run and decide once for all of it, so a
-    // power never comes out half-raised like x²⁴.
-    final run = StringBuffer();
-    var allRenderable = true;
+    // Grab the whole superscript run and mark it once, so a power never comes
+    // out half-raised like x^24 meaning x to the 2, then a 4.
+    buf.write('^');
     while (i < s.length && supToDigit.containsKey(s[i])) {
-      if (!renderable.contains(s[i])) allRenderable = false;
-      run.write(s[i]);
+      buf.write(supToDigit[s[i]]);
       i++;
-    }
-    if (allRenderable) {
-      buf.write(run);
-    } else {
-      buf.write('^');
-      for (final r in run.toString().split('')) {
-        buf.write(supToDigit[r]);
-      }
     }
   }
   return buf.toString();
+}
+
+/// What counts as a power: "^2", "^-3", "^?" in a fill-the-blank, "^n", and
+/// the bracketed "^(n-1)" that a geometric progression needs.
+final _power = RegExp(r'\^(\((?<br>[^()]{1,12})\)|(?<plain>-?\d+|[?a-zA-Z]))');
+
+/// [raw] split into spans with the powers actually raised.
+///
+/// A worksheet is the last place a caret belongs. "(6x + 4)^2" is not how the
+/// expression appears in the textbook the child is working from, and "8^5 / 8^2
+/// = 8^?" printed flat asks them to read three carets before they can start.
+/// The exponent is drawn smaller and higher instead, using ordinary digits that
+/// exist in every font - so it is real notation without depending on a glyph
+/// the built-in font does not have.
+List<pw.InlineSpan> mathSpans(String raw, pw.TextStyle style) {
+  final text = pdfSafe(raw);
+  final spans = <pw.InlineSpan>[];
+  final size = style.fontSize ?? 11;
+  final raised = style.copyWith(fontSize: size * 0.72);
+
+  var at = 0;
+  for (final m in _power.allMatches(text)) {
+    if (m.start > at) {
+      spans.add(pw.TextSpan(text: text.substring(at, m.start), style: style));
+    }
+    spans.add(pw.TextSpan(
+      text: m.namedGroup('br') ?? m.namedGroup('plain'),
+      style: raised,
+      // Just clear of the digits it sits beside. Higher and it collides with
+      // the line above on a two-line prompt.
+      baseline: size * 0.34,
+    ));
+    at = m.end;
+  }
+  if (at < text.length) {
+    spans.add(pw.TextSpan(text: text.substring(at), style: style));
+  }
+  return spans;
+}
+
+/// [raw] as a widget, with any powers raised.
+///
+/// Falls back to a plain Text when there is nothing to raise: RichText lays out
+/// span by span and hyphenates differently, and most prompts have no power in
+/// them at all.
+pw.Widget mathText(String raw, {required pw.TextStyle style}) {
+  if (!raw.contains('^') && !RegExp(r'[⁰-⁹⁻]').hasMatch(raw)) {
+    return pw.Text(pdfSafe(raw), style: style);
+  }
+  return pw.RichText(text: pw.TextSpan(children: mathSpans(raw, style)));
 }
 
 
@@ -354,8 +398,8 @@ class WorksheetBuilder {
                   for (var i = 0; i < questions.length; i++)
                     pw.SizedBox(
                       width: 110,
-                      child: pw.Text(
-                        '${i + 1}.  ${pdfSafe(questions[i].answer)}',
+                      child: mathText(
+                        '${i + 1}.  ${questions[i].answer}',
                         style: const pw.TextStyle(fontSize: 11),
                       ),
                     ),
@@ -602,8 +646,7 @@ class WorksheetBuilder {
               ),
             ),
             pw.SizedBox(height: 4),
-            pw.Text(pdfSafe(p.question),
-                style: const pw.TextStyle(fontSize: 10.5)),
+            mathText(p.question, style: const pw.TextStyle(fontSize: 10.5)),
             pw.SizedBox(height: 9),
             _dots(p.count),
             pw.SizedBox(height: 11),
@@ -680,13 +723,17 @@ class WorksheetBuilder {
 
     // The grid still needs one column count. Only drop to a single column for
     // sheets that are word problems throughout, where half a page is genuinely
-    // too narrow to read.
+    // too narrow to read - or for a bar chart, which needs a scale down the
+    // side and five labelled bars across and cannot be read at half a page.
     final longest =
         questions.map((q) => q.prompt.length).reduce((a, b) => a > b ? a : b);
-    final perRow = longest > 150 ? 1 : 2;
+    final wideFigure = questions
+        .any((q) => diagramSize(q.diagram)?.wantsFullWidth ?? false);
+    final perRow = longest > 150 || wideFigure ? 1 : 2;
 
     pw.Widget card(int i) {
       final picture = PictureCount.tryParse(questions[i]);
+      final figure = diagramWidget(questions[i].diagram);
       return pw.Container(
           padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 8),
           decoration: pw.BoxDecoration(
@@ -719,14 +766,21 @@ class WorksheetBuilder {
                         // that is nothing but counting they get their own
                         // layout; on a mixed one they would silently vanish,
                         // so draw them here too.
-                        pw.Text(
-                          pdfSafe(picture?.question ?? questions[i].prompt),
+                        mathText(
+                          picture?.question ?? questions[i].prompt,
                           style:
                               const pw.TextStyle(fontSize: 11, lineSpacing: 2),
                         ),
                         if (picture != null) ...[
                           pw.SizedBox(height: 8),
                           _dots(picture.count),
+                        ],
+                        // The shape, the solid, the angle, the chart. Without
+                        // it "What is the name of this shape?" is a question
+                        // about nothing.
+                        if (figure != null) ...[
+                          pw.SizedBox(height: 8),
+                          figure,
                         ],
                       ],
                     ),
@@ -919,8 +973,11 @@ class WorksheetBuilder {
     if (!needsWorkingSpace) return _answerCards();
 
     // Prompts that span multiple lines (word problems, ordering questions)
-    // need the full width; short sums do not.
-    final wide = questions.any((q) => q.prompt.length > 46);
+    // need the full width; short sums do not. So does a bar chart, whose
+    // scale and five labels do not survive being squeezed into half a page.
+    final wide = questions.any((q) =>
+        q.prompt.length > 46 ||
+        (diagramSize(q.diagram)?.wantsFullWidth ?? false));
     if (wide) {
       return [
         for (var i = 0; i < questions.length; i++) _questionBlock(i, 1),
@@ -943,7 +1000,9 @@ class WorksheetBuilder {
     ];
   }
 
-  pw.Widget _questionBlock(int i, int columns) => pw.Container(
+  pw.Widget _questionBlock(int i, int columns) {
+    final figure = diagramWidget(questions[i].diagram);
+    return pw.Container(
         margin: pw.EdgeInsets.only(bottom: columns == 1 ? 14 : 12),
         child: pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -963,10 +1022,14 @@ class WorksheetBuilder {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(
-                    pdfSafe(questions[i].prompt.replaceAll('\n\n', '\n')),
+                  mathText(
+                    questions[i].prompt.replaceAll('\n\n', '\n'),
                     style: const pw.TextStyle(fontSize: 12, lineSpacing: 2.5),
                   ),
+                  if (figure != null) ...[
+                    pw.SizedBox(height: 8),
+                    figure,
+                  ],
                   pw.SizedBox(height: 9),
                   // Somewhere to actually write. Light grey so the student's
                   // pencil stands out against it rather than competing.
@@ -988,4 +1051,5 @@ class WorksheetBuilder {
           ],
         ),
       );
+  }
 }

@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 32.
+Baseline when copied: 24 tests passing. Now: 36.
 
 ---
 
@@ -304,7 +304,103 @@ layout choice stays, but nothing depends on it for correctness any more.
 The lesson worth porting with it: a layout rule that decides how something is
 drawn must not also decide whether it is drawn at all.
 
-## 12. Removed, not ported
+## 12. The worksheet never drew the pictures it asked about
+
+`lib/src/worksheet_diagram.dart` (new), `lib/src/worksheet.dart`
+
+`Question.diagram` has carried a spec since the engine was written -
+`polygon:6`, `solid:pentagonal-prism`, `angle:115`, `bars:Mon=12,...`,
+`pie:25`. `WorksheetBuilder` ignored the field entirely.
+
+So a real Class 1 sheet went out reading **"What is the name of this shape?"**
+with no shape on the page, twenty times over, and an answer key saying
+"hexagonal prism". The bar-graph sheet was worse: the generator moved the
+numbers out of the prompt and into the diagram on purpose, so the printed
+question was "Books sold each day: how many were sold altogether?" with no
+data anywhere on the sheet.
+
+Five skills were affected - `shapes-2d`, `shapes-3d`, `angles-types`,
+`data-bargraph`, `data-piechart` - every one of them a Class 1-3 chapter.
+
+Diagrams are drawn with `pw.CustomPaint` rather than typeset, because the PDF's
+built-in font has no glyph for a pentagonal prism and never will. Prisms and
+pyramids are built from one flattened base polygon plus a rule that works out
+which edges the body hides, so a new solid is a row in a map rather than a new
+drawing. Hidden edges are dashed, the way a textbook draws them.
+
+Two things had to change beyond the drawing itself:
+
+- **Reflex angles ran off the card.** The vertex sat at a fixed spot, so a 269
+  degree angle drew its second arm down through the answer box below. Nothing
+  in a PDF clips it. Figures are now laid out in unit terms and fitted to the
+  box afterwards (`_fitter`).
+- **Bar charts showed values their own gridlines could not hit.** A bar at 37
+  on a chart ruled every 5 asks a child to read a number that is not on the
+  paper, and then the key marks them wrong for reading it correctly. The
+  generator now produces multiples of one unit and the chart rules a line at
+  the highest common factor of the bars.
+
+**Tests added:** `every picture a generator asks for is one the worksheet can
+draw` (an unknown spec is a silently blank question, so it fails the build) and
+`a bar chart only ever shows values its own gridlines can hit`.
+
+## 13. Powers printed as carets
+
+`lib/src/worksheet.dart`
+
+`pdfSafe` kept `¹²³` as characters because those three have CP1252 glyphs, and
+turned everything else into `^4`. One sheet therefore printed `x²` a centimetre
+from `x^4` - two spellings of the same idea, and a child has to work out that
+they are the same idea. `(6x + 4)^2` and `8^5 / 8^2 = 8^?` printed with the
+carets showing.
+
+Every superscript now comes back to `^n` form, and `mathSpans` raises it with a
+smaller font on a lifted baseline (`pw.TextSpan(baseline:)`). Real notation,
+drawn rather than depending on a glyph the font does not have. Handles `^2`,
+`^-3`, `^?` in a fill-the-blank, `^n`, and the bracketed `^(n-1)` a geometric
+progression needs.
+
+## 14. The level a teacher picked changed nothing, for 43 skills of 155
+
+`lib/src/gen_context.dart` and every generator file
+
+`c.band(easy, hard)` scales a **number**. A large class of skills has no number
+to scale: "how many faces does this solid have?" is as hard as the solid is.
+Those generators picked from the full list every time, so **Easiest and Hardest
+produced the identical twenty questions** - measured, not guessed: 43 of the
+155 skills with generators.
+
+Added `pickByLevel<T>(List<T>)`, which takes a list **written easiest first**
+and slides a window along it with the level. The window is wider than a fifth
+of the list and neighbouring levels overlap, because a sheet still has to be
+varied - a Hardest window of one item prints the same question twenty times.
+`variantByLevel(n)` is the same thing for choosing which question shape to ask.
+
+Applying it meant ordering a lot of lists by difficulty, which is the actual
+content work: a cube before a hexagonal prism, `sin 0` before `sin 45`, SSS
+before RHS, folding a letter down the middle before the letters that do not
+fold at all. Where a skill's range is pinned by the skill itself
+(`add-2digit-carry` is always two digits) the level moves the numbers up the
+range instead.
+
+**Two mistakes worth recording, both caught by measuring capacity afterwards:**
+
+- Narrowing by variant emptied the easy levels of skills whose easy variants
+  are single fixed facts. `circle-theorems` and `probability-events` dropped to
+  **2 distinct questions** at Easiest. Both now offer every variant at every
+  level and put the level in the numbers instead.
+- `shapes-2d` capped at 19 rather than 20, because seven shapes cannot be both
+  narrowed enough to separate the levels and wide enough to fill a sheet. Fixed
+  by adding nonagon and decagon at the hard end - which is real content, not a
+  workaround.
+
+`probability-events` went from 3 distinct questions to 9 on the way past (any
+dice total, not only seven) and `constructions` from 3 to 8.
+
+**Test added:** `the level a teacher picks changes the questions, for every
+skill` - it re-runs the measurement and names any skill that goes flat.
+
+## 15. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
@@ -313,15 +409,22 @@ drawn must not also decide whether it is drawn at all.
 
 ## Still outstanding
 
-14 skills still cannot fill a 20-question worksheet. Ranked by how many NCERT
-chapters point at them (see `curriculum/ncert-nep.json`):
+19 of 149 offered chapters still cannot fill a 20-question worksheet at some
+level. Item 14 improved several of them (`data-piechart` 6 -> 20,
+`probability-events` 3 -> 9, `constructions` 3 -> 8) and made two chapters
+slightly narrower at Easiest, on purpose: a Class 1 sheet at the easiest level
+should not be reaching for the digit 9.
+
+The ones left are mostly Class 11-12, where the generator has three question
+templates and no amount of level-sliding makes a fourth:
 
 | Skill | Distinct questions | NCERT chapters |
 |---|---|---|
-| `constructions` | 3 | 3 |
-| `triangle-congruence` | 4 | 1 |
-| `data-piechart` | 6 | 1 |
-| ...11 more, mostly Class 11-12 | 3-16 | 1-2 |
+| `definite-integrals` | 3-7 | 2 |
+| `differential-equations` | 3-8 | 1 |
+| `constructions` | 8 | 3 |
+| `probability-events` | 9 | 1 |
+| `binomial-theorem` | 4-16 | 1 |
 
 These need extra question templates rather than a wider number range, so each
 one is real work rather than a one-line change.

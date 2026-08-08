@@ -48,7 +48,11 @@ void registerMensuration() {
     const mins = {
       'quarter past': 15, 'half past': 30, 'quarter to': 45, "o'clock": 0,
     };
-    final phrase = c.pick(mins.keys.toList());
+    // O'clock is read straight off the hour hand. Half past and quarter past
+    // still name the hour they belong to. Quarter to names the *next* hour,
+    // which is the one children get wrong, so it comes last.
+    final phrase =
+        c.pickByLevel(const ["o'clock", 'half past', 'quarter past', 'quarter to']);
     final m = mins[phrase]!;
     final displayHour = phrase == 'quarter to' ? (hour % 12) + 1 : hour;
     final shown = phrase == 'quarter to'

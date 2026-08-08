@@ -69,7 +69,9 @@ void registerRatioAlgebra() {
   });
 
   register('percent_basic', (c) {
-    final den = c.pick([2, 4, 5, 10, 20, 25, 50]);
+    // Halves, tenths and quarters are percentages a child already half knows.
+    // Twentieths and fiftieths have to be scaled to a hundred first.
+    final den = c.pickByLevel(const [2, 10, 4, 5, 25, 20, 50]);
     final num = c.int_(1, den - 1);
     final pct = num * 100 ~/ den;
     return Question(

@@ -187,22 +187,33 @@ void registerSenior() {
   // ----------------------------------------------------------- geometry
 
   register('constructions', (c) {
+    // Easiest first. Which instrument to reach for is recall; what a compass
+    // width has to be, or what bisecting twice leaves you with, is the part
+    // that only makes sense once the construction has been done by hand.
+    //
+    // Three facts also meant this skill could only ever make three questions,
+    // so a sheet asking for twenty came back with three.
     const facts = {
       'Which two instruments do you need to bisect an angle?':
           'compass and ruler',
+      'Which instrument is never used in a ruler-and-compass construction?':
+          'protractor',
+      'To copy an angle exactly, which instrument keeps the width fixed?':
+          'compass',
+      'A perpendicular bisector cuts a line segment into how many equal '
+              'parts?':
+          '2',
+      'Which angle can you construct with a compass alone, using one arc the '
+              'same width as the radius?':
+          '60 degrees',
       'To construct a perpendicular bisector, where must the compass width be '
               'set?':
           'more than half the line',
-      'To copy an angle exactly, which instrument keeps the width fixed?':
-          'compass',
+      'Bisecting a right angle gives which angle?': '45 degrees',
+      'Bisecting a 60 degree angle gives which angle?': '30 degrees',
     };
-    const options = [
-      'compass and ruler',
-      'more than half the line',
-      'compass',
-      'protractor only',
-    ];
-    final q = c.pick(facts.keys.toList());
+    final options = facts.values.toSet().toList();
+    final q = c.pickByLevel(facts.keys.toList());
     final a = facts[q]!;
     return Question(
       skillId: c.skillId,

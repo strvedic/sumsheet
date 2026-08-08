@@ -405,6 +405,73 @@ void main() {
       expect(magnitude(5), greaterThan(magnitude(1)));
     });
 
+    test('the level a teacher picks changes the questions, for every skill', () {
+      // Forty-three of the hundred and fifty-five skills used to hand back the
+      // identical twenty questions at Easiest and at Hardest, because their
+      // difficulty is not a number that can be scaled - "how many faces does a
+      // cube have" is as hard as it is. A teacher who changed the setting and
+      // got the same sheet has been told the setting does nothing.
+      final flat = <String>[];
+      for (final skill in map.all.where(hasGenerator)) {
+        final easy = <String>[];
+        final hard = <String>[];
+        for (var seed = 0; seed < 24; seed++) {
+          easy.add(
+              generateQuestion(skill: skill, difficulty: 1, seed: seed).prompt);
+          hard.add(
+              generateQuestion(skill: skill, difficulty: 5, seed: seed).prompt);
+        }
+        if (easy.join('|') == hard.join('|')) flat.add(skill.id);
+      }
+      expect(flat, isEmpty,
+          reason: 'these skills ignore the level: ${flat.join(', ')}');
+    });
+
+    test('every picture a generator asks for is one the worksheet can draw', () {
+      // The spec is a string, so nothing stops a generator inventing a new kind
+      // of picture. The PDF silently skipped anything it did not recognise, and
+      // "What is the name of this solid?" printed with no solid on it.
+      final unknown = <String>{};
+      for (final skill in map.all.where(hasGenerator)) {
+        for (var d = 1; d <= 5; d++) {
+          for (var seed = 0; seed < 12; seed++) {
+            final q = generateQuestion(skill: skill, difficulty: d, seed: seed);
+            if (q.diagram != null && diagramSize(q.diagram) == null) {
+              unknown.add('${skill.id}: ${q.diagram}');
+            }
+          }
+        }
+      }
+      expect(unknown, isEmpty,
+          reason: 'the worksheet cannot draw: ${unknown.join(', ')}');
+    });
+
+    test('a bar chart only ever shows values its own gridlines can hit', () {
+      // The chart rules a line at the highest common factor of its bars, so a
+      // student reads every value exactly. Free-running numbers put a bar at 37
+      // on a chart ruled every 5: they read 35, and the key marks them wrong
+      // for reading the chart correctly.
+      for (var d = 1; d <= 5; d++) {
+        for (var seed = 0; seed < 30; seed++) {
+          final q = generateQuestion(
+              skill: map['data-bargraph'], difficulty: d, seed: seed);
+          final values = q.diagram!
+              .substring(q.diagram!.indexOf(':') + 1)
+              .split(',')
+              .map((e) => int.parse(e.split('=')[1]))
+              .toList();
+          var hcf = values.first;
+          for (final v in values.skip(1)) {
+            hcf = _hcf(hcf, v);
+          }
+          // At most fourteen gridlines, or the scale is unreadable for the
+          // opposite reason.
+          expect(values.reduce(max) ~/ hcf, lessThanOrEqualTo(14),
+              reason: 'chart ${values.join(",")} needs too many gridlines');
+        }
+      }
+    });
+
     test('same seed reproduces the identical question', () {
       for (final skill in map.all.where(hasGenerator).take(20)) {
         final a = generateQuestion(skill: skill, difficulty: 3, seed: 12345);
@@ -746,3 +813,6 @@ bool? _verifyIntegerArithmetic(Question q) {
   if (expected == null) return null;
   return q.answer.trim() == '$expected';
 }
+
+/// Highest common factor, for checking a chart's gridlines land on its bars.
+int _hcf(int a, int b) => b == 0 ? a : _hcf(b, a % b);

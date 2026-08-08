@@ -46,6 +46,35 @@ class GenContext {
     return (easy + (hard - easy) * t).round();
   }
 
+  /// Picks from [options], **written easiest first**, letting the level decide
+  /// which end of the list is in play.
+  ///
+  /// [band] only ever scaled numbers, which meant a whole class of skills had
+  /// nowhere to put the level. "How many faces does this solid have?" has no
+  /// number to grow - the difficulty is entirely in *which* solid is asked
+  /// about - so those generators picked from the full list every time and a
+  /// teacher who chose Hardest was handed the same sheet as Easiest. Forty-three
+  /// of the hundred and fifty-five skills behaved that way.
+  ///
+  /// The window slides rather than jumps, and it is wider than a fifth of the
+  /// list, so neighbouring levels still overlap. A sheet has to stay varied: a
+  /// Hardest window of one item would print the same question twenty times.
+  T pickByLevel<T>(List<T> options) {
+    if (options.length < 2) return options.first;
+    final width = max(2, (options.length * 0.6).ceil());
+    final slide = options.length - width;
+    final lo = (slide * (difficulty - 1) / 4.0).round();
+    return options[lo + rng.nextInt(width)];
+  }
+
+  /// Which of several question shapes to ask, [easiest first].
+  ///
+  /// The same idea as [pickByLevel], named for how it reads at the call site:
+  /// `switch (c.variantByLevel(4))` says the four branches below are in order
+  /// of how hard they are, which is a claim worth making out loud.
+  int variantByLevel(int count) =>
+      pickByLevel(List<int>.generate(count, (i) => i));
+
   /// Builds multiple-choice options around a correct numeric answer.
   /// Distractors are near misses, which is what makes MCQ diagnostic:
   /// picking "carry forgotten" tells you more than picking a random number.

@@ -24,11 +24,25 @@ void registerDataAndTrig() {
 
   register('bar_graph', (c) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    // Every value is a multiple of one unit, so the chart can rule a line at
+    // each one and every bar top meets a labelled gridline. Free numbers gave
+    // a bar at 37 on a chart ruled every 5: the child reads 35 or 40, and the
+    // answer key marks them wrong for reading the chart correctly.
+    //
+    // The unit is also what makes the level mean something here. Reading off a
+    // scale in 1s is a different job from reading one in 10s.
+    final unit = c.pick([
+      1, 2,
+      if (c.difficulty >= 3) 5,
+      if (c.difficulty >= 4) 10,
+      if (c.difficulty >= 5) 20,
+    ]);
+    final steps = c.band(6, 12);
     final values = <int>[];
     while (values.toSet().length < 5) {
       values.clear();
       for (var i = 0; i < 5; i++) {
-        values.add(c.int_(4, c.band(20, 60)));
+        values.add(unit * c.int_(1, steps));
       }
     }
     final maxV = values.reduce((a, b) => a > b ? a : b);
@@ -58,7 +72,11 @@ void registerDataAndTrig() {
   });
 
   register('pie_chart', (c) {
-    final pct = c.pick([10, 20, 25, 40, 50, 75]);
+    // Half, then quarters, then the tenths that need a real multiplication.
+    // Six fixed percentages also meant this skill could only ever make six
+    // different questions, so a twenty-question sheet came back with six.
+    final pct = c.pickByLevel(
+        const [50, 25, 75, 10, 20, 40, 30, 60, 5, 15, 35, 45, 65, 80, 90]);
     return Question(
       skillId: c.skillId,
       prompt: 'The shaded slice is $pct% of the whole.\n\n'
@@ -191,8 +209,10 @@ void registerDataAndTrig() {
 
   register('trig_ratios', (c) {
     const triples = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [7, 24, 25]];
-    final t = c.pick(triples);
-    final ratio = c.pick(['sin', 'cos', 'tan']);
+    final t = c.pickByLevel(triples);
+    // Sin and cos are both "something over the hypotenuse", which is the part
+    // students get right. Tan is the one where the hypotenuse is a distractor.
+    final ratio = c.pickByLevel(const ['sin', 'cos', 'tan']);
     final f = switch (ratio) {
       'sin' => Fraction(t[0], t[2]),
       'cos' => Fraction(t[1], t[2]),
@@ -219,14 +239,16 @@ void registerDataAndTrig() {
   });
 
   register('trig_standard', (c) {
-    // Only the exact values a student is expected to memorise.
+    // Only the exact values a student is expected to memorise, listed with the
+    // ends of the table first. sin 0 and cos 0 are read straight off the axes;
+    // the 30s and 45s have to be recalled from the triangle they come from.
     const table = {
-      'sin 0': '0', 'sin 30': '1/2', 'sin 90': '1',
-      'cos 0': '1', 'cos 60': '1/2', 'cos 90': '0',
+      'sin 0': '0', 'cos 0': '1', 'sin 90': '1', 'cos 90': '0',
       'tan 0': '0', 'tan 45': '1',
+      'sin 30': '1/2', 'cos 60': '1/2',
       'sin 45': '1/root2', 'cos 45': '1/root2',
     };
-    final key = c.pick(table.keys.toList());
+    final key = c.pickByLevel(table.keys.toList());
     final ans = table[key]!;
     return Question(
       skillId: c.skillId,

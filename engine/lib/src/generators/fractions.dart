@@ -71,15 +71,21 @@ void registerFractions() {
     final like = c.skillId.contains('compare-like');
     late Fraction a, b;
     if (like) {
-      final den = c.pick([5, 6, 7, 8, 9, 10]);
+      // Halves and quarters are shapes a child has cut up. Sevenths and
+      // ninths are not, and the same "just compare the tops" rule is harder
+      // to trust when the bottom number means nothing to you yet.
+      final den = c.pickByLevel(const [4, 5, 6, 8, 10, 7, 9, 12]);
       final n1 = c.int_(1, den - 1);
       final n2 = c.intExcept(1, den - 1, {n1});
       a = Fraction(n1, den);
       b = Fraction(n2, den);
     } else {
+      // Bottoms where one divides the other only need one of them changing.
+      // Coprime bottoms mean both fractions have to be rewritten.
+      final denHi = c.band(6, 12);
       do {
-        a = Fraction(c.int_(1, 9), c.int_(2, 12));
-        b = Fraction(c.int_(1, 9), c.int_(2, 12));
+        a = Fraction(c.int_(1, 9), c.int_(2, denHi));
+        b = Fraction(c.int_(1, 9), c.int_(2, denHi));
       } while (a == b);
     }
     final bigger = a > b ? a : b;
@@ -111,12 +117,12 @@ void registerFractions() {
     final unlike = c.skillId.contains('unlike');
     late Fraction a, b;
     if (unlike) {
-      final d1 = c.pick([2, 3, 4, 5, 6]);
-      final d2 = c.intExcept(2, 9, {d1});
+      final d1 = c.pickByLevel(const [2, 3, 4, 5, 6]);
+      final d2 = c.intExcept(2, c.band(6, 9), {d1});
       a = Fraction(c.int_(1, d1 - 1), d1);
       b = Fraction(c.int_(1, d2 - 1), d2);
     } else {
-      final den = c.pick([5, 6, 7, 8, 9, 10, 12]);
+      final den = c.pickByLevel(const [5, 6, 8, 10, 7, 9, 12]);
       a = Fraction(c.int_(1, den - 2), den);
       b = Fraction(c.int_(1, den - a.num * den ~/ den - 1).clamp(1, den - 1), den);
     }
@@ -240,7 +246,10 @@ void registerFractions() {
   });
 
   register('decimal_convert', (c) {
-    final den = c.pick([2, 4, 5, 8, 10, 20, 25, 50]);
+    // Tenths and halves come out in one place. Eighths and fiftieths need
+    // three, which is where the conversion stops being a fact and starts
+    // being a division.
+    final den = c.pickByLevel(const [10, 2, 5, 4, 20, 25, 50, 8]);
     final num = c.int_(1, den - 1);
     final f = Fraction(num, den);
     final scaled = 1000 * f.num ~/ f.den;

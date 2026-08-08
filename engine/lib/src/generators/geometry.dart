@@ -10,16 +10,24 @@ import '../question.dart';
 /// the text alone.
 void registerGeometry() {
   register('shapes_2d', (c) {
+    // Easiest first, so the level can slide along it. A four-year-old knows a
+    // square before a triangle and has never met a heptagon; the shape asked
+    // about IS the difficulty here, because there is no number to make bigger.
+    // Nonagon and decagon are here for the hard end rather than because a
+    // Class 2 child is expected to name one. Without them the level had only
+    // seven shapes to slide along, and a window narrow enough to make Easiest
+    // and Hardest differ was also too narrow to fill a twenty-question sheet.
     const sides = {
-      'triangle': 3, 'square': 4, 'rectangle': 4, 'pentagon': 5,
-      'hexagon': 6, 'heptagon': 7, 'octagon': 8,
+      'square': 4, 'rectangle': 4, 'triangle': 3, 'pentagon': 5,
+      'hexagon': 6, 'heptagon': 7, 'octagon': 8, 'nonagon': 9, 'decagon': 10,
     };
     String diagramFor(String name) =>
         name == 'rectangle' ? 'polygon:rect' : 'polygon:${sides[name]}';
+    final names = sides.keys.toList();
 
     switch (c.int_(0, 3)) {
       case 0:
-        final name = c.pick(sides.keys.toList());
+        final name = c.pickByLevel(names);
         final n = sides[name]!;
         return Question(
           skillId: c.skillId,
@@ -37,7 +45,7 @@ void registerGeometry() {
           ],
         );
       case 1:
-        final name = c.pick(sides.keys.toList());
+        final name = c.pickByLevel(names);
         final n = sides[name]!;
         return Question(
           skillId: c.skillId,
@@ -56,7 +64,7 @@ void registerGeometry() {
       case 2:
         // Named from the picture, not from a description. Recognising the
         // shape on sight is the skill; the side count is the way in.
-        final name = c.pick(sides.keys.toList());
+        final name = c.pickByLevel(names);
         final n = sides[name]!;
         return Question(
           skillId: c.skillId,
@@ -64,14 +72,14 @@ void registerGeometry() {
           answer: name,
           difficulty: c.difficulty,
           diagram: diagramFor(name),
-          choices: _withAnswer(sides.keys.toList(), name, c),
+          choices: _withAnswer(names, name, c),
           steps: [
             'Count the straight sides: there are $n.',
             'A shape with $n straight sides drawn like this is ${_a(name)}.',
           ],
         );
       default:
-        final n = c.int_(3, 8);
+        final n = c.pickByLevel(const [4, 3, 5, 6, 7, 8, 9, 10]);
         return Question(
           skillId: c.skillId,
           prompt: 'This shape has $n straight sides.\n\n'
@@ -91,20 +99,27 @@ void registerGeometry() {
 
   register('shapes_3d', (c) {
     // Faces, edges, vertices. Counted the way NCERT counts them.
+    //
+    // In order of how hard the solid is to hold in the head, easiest first: a
+    // cube is a dice, a hexagonal prism is a pencil seen properly for the first
+    // time. Nothing about a face count grows with the level, so the choice of
+    // solid is where the level has to live - without this a Class 1 sheet on
+    // "What is Long? What is Round?" asked for the vertices of a pentagonal
+    // pyramid, and asked the same thing whichever level the teacher picked.
     const flat = {
       'cube': [6, 12, 8],
       'cuboid': [6, 12, 8],
       'square pyramid': [5, 8, 5],
       'triangular pyramid': [4, 6, 4],
       'triangular prism': [5, 9, 6],
-      'pentagonal prism': [7, 15, 10],
-      'hexagonal prism': [8, 18, 12],
       'pentagonal pyramid': [6, 10, 6],
+      'pentagonal prism': [7, 15, 10],
       'hexagonal pyramid': [7, 12, 7],
+      'hexagonal prism': [8, 18, 12],
     };
     // A curved surface makes "how many edges" a matter of convention rather
     // than of counting, so these are only ever asked about their faces.
-    const curved = {'cylinder': 3, 'cone': 2, 'sphere': 1};
+    const curved = {'sphere': 1, 'cylinder': 3, 'cone': 2};
     const partNames = ['faces', 'edges', 'vertices'];
 
     String explain(int idx) => switch (idx) {
@@ -116,8 +131,8 @@ void registerGeometry() {
     // Named from the picture. A cube and a cuboid share the same 6, 12 and 8,
     // so the counts alone could never have picked one out anyway.
     if (c.int_(0, 3) == 3) {
-      final all = [...flat.keys, ...curved.keys];
-      final name = c.pick(all);
+      final all = [...curved.keys, ...flat.keys];
+      final name = c.pickByLevel(all);
       return Question(
         skillId: c.skillId,
         prompt: 'What is the name of this solid?',
@@ -149,8 +164,10 @@ void registerGeometry() {
       );
     }
 
-    final name = c.pick(flat.keys.toList());
-    final idx = c.int_(0, 2);
+    final name = c.pickByLevel(flat.keys.toList());
+    // Faces you can see and point at. Edges and vertices need the hidden back
+    // of the solid held in mind, which is a harder job than counting.
+    final idx = c.pickByLevel(const [0, 2, 1]);
     final n = flat[name]![idx];
     return Question(
       skillId: c.skillId,
@@ -279,7 +296,11 @@ void registerGeometry() {
   });
 
   register('angles', (c) {
-    final kind = c.pick(['acute', 'right', 'obtuse', 'straight', 'reflex']);
+    // Right and straight are recognised at a glance. Reflex is the one that
+    // catches children out, because the angle being named is the side of the
+    // arms nobody looks at first - so it belongs at the hard end.
+    final kind = c.pickByLevel(
+        const ['right', 'straight', 'acute', 'obtuse', 'reflex']);
     final deg = switch (kind) {
       'acute' => c.int_(10, 89),
       'right' => 90,
@@ -314,7 +335,12 @@ void registerGeometry() {
   register('angle_pairs', (c) {
     final complement = c.coin();
     final total = complement ? 90 : 180;
-    final a = c.int_(complement ? 10 : 20, total - 10);
+    // A multiple of ten to take from 90 is a different sum from 47 from 180.
+    // The rule being tested is the same either way; the arithmetic in front of
+    // it is what the level can honestly change.
+    final round = c.pickByLevel(const [10, 5, 1, 1, 1]);
+    final a = c.int_((complement ? 10 : 20) ~/ round, (total - 10) ~/ round) *
+        round;
     final b = total - a;
     return Question(
       skillId: c.skillId,
@@ -333,8 +359,12 @@ void registerGeometry() {
   });
 
   register('parallel_lines', (c) {
-    final a = c.int_(35, 145);
-    final kind = c.pick(['corresponding', 'alternate', 'co-interior']);
+    final round = c.pickByLevel(const [5, 5, 1, 1, 1]);
+    final a = c.int_(35 ~/ round, 145 ~/ round) * round;
+    // Corresponding and alternate angles are equal - one step. Co-interior
+    // needs the subtraction as well, so it is the one to save for later.
+    final kind =
+        c.pickByLevel(const ['corresponding', 'alternate', 'co-interior']);
     final ans = kind == 'co-interior' ? 180 - a : a;
     return Question(
       skillId: c.skillId,
@@ -353,8 +383,11 @@ void registerGeometry() {
   });
 
   register('triangle_angles', (c) {
-    final a = c.int_(25, 100);
-    final b = c.int_(20, 170 - a);
+    // Two angles in tens leave a third in tens. Once they are any number at
+    // all, the same rule needs a two-step subtraction with a carry in it.
+    final round = c.pickByLevel(const [10, 10, 5, 1, 1]);
+    final a = c.int_(25 ~/ round, 100 ~/ round) * round;
+    final b = c.int_(20 ~/ round, (170 - a) ~/ round) * round;
     final third = 180 - a - b;
     return Question(
       skillId: c.skillId,
@@ -379,7 +412,9 @@ void registerGeometry() {
       'two angles and the side between them are equal': 'ASA',
       'the right angle, hypotenuse and one side are equal': 'RHS',
     };
-    final desc = c.pick(cases.keys.toList());
+    // SSS is the one every child meets first and RHS the one that only makes
+    // sense once right-angled triangles have been done properly.
+    final desc = c.pickByLevel(cases.keys.toList());
     final ans = cases[desc]!;
     return Question(
       skillId: c.skillId,
@@ -453,7 +488,8 @@ void registerGeometry() {
   });
 
   register('quadrilaterals', (c) {
-    final a = c.int_(40, 140);
+    final round = c.pickByLevel(const [10, 10, 5, 1, 1]);
+    final a = c.int_(40 ~/ round, 140 ~/ round) * round;
     return Question(
       skillId: c.skillId,
       prompt: 'One angle of a parallelogram measures $a degrees.\n\n'
@@ -492,7 +528,11 @@ void registerGeometry() {
   });
 
   register('circle_theorems', (c) {
-    final which = c.pick(['semicircle', 'centre', 'tangent']);
+    // Every level sees all three, on purpose. The first two are single facts
+    // with one question each in them, so holding them back for the easy levels
+    // left those levels with two questions in total - a twenty-question sheet
+    // came back with two. The level goes into the numbers below instead.
+    final which = c.pick(const ['semicircle', 'tangent', 'centre']);
     if (which == 'semicircle') {
       return Question(
         skillId: c.skillId,
@@ -515,7 +555,8 @@ void registerGeometry() {
         steps: ['A tangent is always perpendicular to the radius: 90 degrees.'],
       );
     }
-    final at = c.int_(20, 80);
+    final atRound = c.pickByLevel(const [10, 10, 5, 1, 1]);
+    final at = c.int_(20 ~/ atRound, 80 ~/ atRound) * atRound;
     return Question(
       skillId: c.skillId,
       prompt: 'An angle at the circumference of a circle measures $at degrees.'
@@ -533,32 +574,47 @@ void registerGeometry() {
   register('symmetry', (c) {
     // A circle is left out on purpose: it has infinitely many lines of
     // symmetry, and no whole number is the right answer.
+    //
+    // Every one of these lists is written easiest first, because that is the
+    // only thing the level has to work with here - there is no number in "how
+    // many lines of symmetry does a kite have" to make bigger. The shapes with
+    // none come late: a child who has just learnt to fold shapes in half
+    // expects every shape to fold, and a parallelogram is the counterexample,
+    // not the introduction.
     const lines = {
-      'square': 4, 'rectangle': 2, 'rhombus': 2, 'parallelogram': 0,
-      'equilateral triangle': 3, 'isosceles triangle': 1,
-      'scalene triangle': 0, 'kite': 1, 'semicircle': 1,
+      'square': 4, 'rectangle': 2, 'equilateral triangle': 3,
+      'isosceles triangle': 1, 'kite': 1, 'semicircle': 1, 'rhombus': 2,
       'regular pentagon': 5, 'regular hexagon': 6, 'regular octagon': 8,
+      'parallelogram': 0, 'scalene triangle': 0,
     };
     // Capital letters, the way NCERT introduces the idea. Drawn plainly, with
     // no serifs or slant - which is why O and Q are not here, since how many
     // lines they have depends entirely on how they are written.
+    //
+    // Fold down the middle first (A T V M U W Y), then across (B C D E), then
+    // the ones that do both (H I X), then the ones that do neither.
     const letters = {
-      'A': 1, 'B': 1, 'C': 1, 'D': 1, 'E': 1, 'H': 2, 'I': 2, 'M': 1,
-      'T': 1, 'U': 1, 'V': 1, 'W': 1, 'X': 2, 'Y': 1,
+      'A': 1, 'T': 1, 'V': 1, 'M': 1, 'U': 1, 'W': 1, 'Y': 1,
+      'B': 1, 'C': 1, 'D': 1, 'E': 1,
+      'H': 2, 'I': 2, 'X': 2,
       'N': 0, 'S': 0, 'Z': 0,
     };
     // How many times a shape looks unchanged in one full turn. Everything has
-    // an order of at least 1 - the turn all the way back to the start.
+    // an order of at least 1 - the turn all the way back to the start, which
+    // is why the shapes of order 1 sit at the hard end: answering "none" is
+    // the mistake the question is built to catch.
     const order = {
-      'square': 4, 'rectangle': 2, 'rhombus': 2, 'parallelogram': 2,
-      'equilateral triangle': 3, 'isosceles triangle': 1,
-      'scalene triangle': 1, 'kite': 1,
+      'square': 4, 'rectangle': 2, 'equilateral triangle': 3, 'rhombus': 2,
       'regular pentagon': 5, 'regular hexagon': 6, 'regular octagon': 8,
+      'parallelogram': 2, 'isosceles triangle': 1, 'scalene triangle': 1,
+      'kite': 1,
     };
 
-    switch (c.int_(0, 3)) {
+    // Counting folds comes before naming an order of rotation, which comes
+    // before working back from an order to the angle that turns it.
+    switch (c.variantByLevel(4)) {
       case 0:
-        final name = c.pick(lines.keys.toList());
+        final name = c.pickByLevel(lines.keys.toList());
         final n = lines[name]!;
         return Question(
           skillId: c.skillId,
@@ -572,7 +628,7 @@ void registerGeometry() {
           ],
         );
       case 1:
-        final letter = c.pick(letters.keys.toList());
+        final letter = c.pickByLevel(letters.keys.toList());
         final n = letters[letter]!;
         return Question(
           skillId: c.skillId,
@@ -590,7 +646,7 @@ void registerGeometry() {
           hint: 'Fold it down the middle first, then across.',
         );
       case 2:
-        final name = c.pick(order.keys.toList());
+        final name = c.pickByLevel(order.keys.toList());
         final n = order[name]!;
         return Question(
           skillId: c.skillId,
@@ -611,7 +667,8 @@ void registerGeometry() {
         // Only shapes that actually turn onto themselves. "Through what angle
         // does a scalene triangle rotate onto itself" has no answer short of a
         // full turn.
-        final name = c.pick(order.keys.where((k) => order[k]! > 1).toList());
+        final name =
+            c.pickByLevel(order.keys.where((k) => order[k]! > 1).toList());
         final n = order[name]!;
         final angle = 360 ~/ n;
         return Question(
@@ -631,8 +688,9 @@ void registerGeometry() {
   });
 
   register('coordinates', (c) {
-    final x = c.intExcept(-12, 12, {0});
-    final y = c.intExcept(-12, 12, {0});
+    final reach = c.band(6, 40);
+    final x = c.intExcept(-reach, reach, {0});
+    final y = c.intExcept(-reach, reach, {0});
     final quadrant = x > 0 ? (y > 0 ? 'I' : 'IV') : (y > 0 ? 'II' : 'III');
     return Question(
       skillId: c.skillId,
@@ -651,10 +709,15 @@ void registerGeometry() {
   });
 
   register('distance_formula', (c) {
-    const triples = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17], [9, 12, 15]];
-    final t = c.pick(triples);
-    final x1 = c.int_(-6, 6);
-    final y1 = c.int_(-6, 6);
+    // 3-4-5 first: a student who knows one triple by heart can check their
+    // working against it. The bigger ones have to be computed.
+    const triples = [[3, 4, 5], [6, 8, 10], [9, 12, 15], [5, 12, 13], [8, 15, 17]];
+    final t = c.pickByLevel(triples);
+    // Both points in the first quadrant is a picture the student can draw.
+    // Negatives mean the differences have to be handled as well as the squares.
+    final low = c.pickByLevel(const [0, 0, -3, -6, -9]);
+    final x1 = c.int_(low, 6);
+    final y1 = c.int_(low, 6);
     final x2 = x1 + t[0];
     final y2 = y1 + t[1];
     return Question(

@@ -23,7 +23,9 @@ void registerArithmetic() {
   });
 
   register('digit_recognise', (c) {
-    final n = c.int_(0, 9);
+    // Small numbers before big ones. A child who can count on their fingers
+    // can reach four; nine has to be known.
+    final n = c.pickByLevel(const [1, 2, 3, 0, 4, 5, 6, 7, 8, 9]);
     const words = [
       'zero', 'one', 'two', 'three', 'four',
       'five', 'six', 'seven', 'eight', 'nine',
@@ -59,21 +61,31 @@ void registerArithmetic() {
       'count-1-100' => 100,
       _ => c.band(20, 100),
     };
-    final start = c.int_(1, maxN - 4);
-    final missingAt = c.int_(1, 3);
-    final seq = List.generate(5, (i) => start + i);
+    // With the range fixed by the skill, the level is in the counting itself.
+    // Counting on is what a child does first; counting back is genuinely
+    // harder, and a run that crosses a ten is harder than one that does not.
+    final back = c.difficulty >= 4 && c.coin();
+    final step = back ? -1 : 1;
+    final start = back ? c.int_(6, maxN) : c.int_(1, maxN - 4);
+    final seq = List.generate(5, (i) => start + i * step);
+    // Early on the gap is near the front, with numbers on both sides of it to
+    // count between. Later it moves to the end, where there is nothing after
+    // it to check against.
+    final missingAt = c.pickByLevel(const [1, 2, 3, 4]);
     final answer = seq[missingAt];
     final shown = [...seq];
     shown[missingAt] = -1;
     return Question(
       skillId: c.skillId,
-      prompt:
-          'Fill in the missing number:\n\n${shown.map((e) => e == -1 ? '__' : '$e').join(', ')}',
+      prompt: 'Fill in the missing number:\n\n'
+          '${shown.map((e) => e == -1 ? '__' : '$e').join(', ')}',
       answer: '$answer',
       difficulty: c.difficulty,
       choices: c.choicesAround(answer, distractors: [answer - 1, answer + 1]),
       steps: [
-        'The numbers go up by 1 each time.',
+        back
+            ? 'The numbers go down by 1 each time.'
+            : 'The numbers go up by 1 each time.',
         'After ${seq[missingAt - 1]} comes $answer.',
       ],
     );
@@ -158,9 +170,14 @@ void registerArithmetic() {
     };
     final low = _pow10(digits - 1);
     final n = c.int_(low, low * 10 - 1);
-    final pos = c.int_(0, digits - 1);
+    // Ones and tens are counted off the right-hand end. The further left the
+    // column, the more places have to be held in the head to reach it - which
+    // is the whole difficulty of place value once the range is fixed.
+    final pos = c.pickByLevel(List<int>.generate(digits, (i) => i));
     final digit = (n ~/ _pow10(pos)) % 10;
-    if (c.coin()) {
+    // Naming the digit in a column is reading. Giving its place value is
+    // reading and then multiplying, so it is the harder half of the skill.
+    if (c.difficulty <= 2 || (c.difficulty <= 4 && c.coin())) {
       return Question(
         skillId: c.skillId,
         prompt: 'In the number $n, which digit is in the ${places[pos]} place?',
@@ -298,11 +315,16 @@ void registerArithmetic() {
     // substring "carry", so a contains() check silently gave the no-carrying
     // skill nothing but carrying questions.
     final wantCarry = c.skillId == 'add-2digit-carry';
+    // Both numbers stay two digits - that is what the skill is - so the level
+    // moves the numbers up the range instead. 13 + 24 and 87 + 96 are the same
+    // procedure and nothing like the same sum to a seven-year-old.
+    final lo = c.band(10, 40);
+    final hi = c.band(45, 99);
     late int a, b;
     var guard = 0;
     do {
-      a = c.int_(10, 99);
-      b = c.int_(10, 99);
+      a = c.int_(lo, hi);
+      b = c.int_(lo, hi);
       guard++;
     } while (guard < 100 && ((a % 10 + b % 10 >= 10) != wantCarry));
     final ans = a + b;
@@ -327,10 +349,12 @@ void registerArithmetic() {
   register('sub_column', (c) {
     // Same trap as add_column: "sub-2digit-noborrow" contains "borrow".
     final wantBorrow = c.skillId == 'sub-2digit-borrow';
+    final lo = c.band(20, 45);
+    final hi = c.band(50, 99);
     late int a, b;
     var guard = 0;
     do {
-      a = c.int_(20, 99);
+      a = c.int_(lo, hi);
       b = c.int_(10, a - 1);
       guard++;
     } while (guard < 200 && ((a % 10 < b % 10) != wantBorrow));
@@ -449,8 +473,13 @@ void registerArithmetic() {
 
   register('mult_column', (c) {
     final twoByTwo = c.skillId.contains('2by2');
-    final a = c.int_(twoByTwo ? 11 : 12, twoByTwo ? 99 : 99);
-    final b = twoByTwo ? c.int_(11, 99) : c.int_(2, 9);
+    // The shape of the sum is the skill and cannot move, so the level moves
+    // the digits. A multiplier in the low teens leans on tables the child
+    // already has; one in the high nineties does not.
+    final a = c.int_(twoByTwo ? 11 : 12, c.band(twoByTwo ? 39 : 49, 99));
+    final b = twoByTwo
+        ? c.int_(11, c.band(29, 99))
+        : c.int_(2, c.band(5, 9));
     final ans = a * b;
     return Question(
       skillId: c.skillId,

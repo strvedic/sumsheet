@@ -12,15 +12,21 @@ void registerAdvanced() {
   // ------------------------------------------------------------------ sets
 
   register('sets', (c) {
+    // Bigger sets drawn from a wider pool: more to hold in the head, and an
+    // overlap that has to be found rather than seen.
+    final size = c.band(3, 6);
+    final pool = c.band(9, 20);
     final a = <int>{};
     final b = <int>{};
-    while (a.length < 4) {
-      a.add(c.int_(1, 9));
+    while (a.length < size) {
+      a.add(c.int_(1, pool));
     }
-    while (b.length < 4) {
-      b.add(c.int_(1, 9));
+    while (b.length < size) {
+      b.add(c.int_(1, pool));
     }
-    final union = c.coin();
+    // Union is counting what you can see. Intersection is the one where the
+    // answer can be nothing at all, which students do not expect.
+    final union = c.difficulty <= 2 || (c.difficulty <= 4 && c.coin());
     final result = union ? {...a, ...b} : a.intersection(b);
     final sorted = result.toList()..sort();
     final aS = (a.toList()..sort()).join(', ');
@@ -154,8 +160,13 @@ void registerAdvanced() {
   });
 
   register('matrices', (c) {
-    final a11 = c.int_(1, 9), a12 = c.int_(1, 9);
-    final b11 = c.int_(1, 9), b21 = c.int_(1, 9);
+    // Row-times-column is one procedure at every level, so the level lives in
+    // the arithmetic it runs on: small positives first, then two-digit
+    // entries, then the negatives that make the signs worth watching.
+    final lo = c.band(1, -9);
+    final hi = c.band(9, 20);
+    final a11 = c.int_(lo, hi), a12 = c.int_(lo, hi);
+    final b11 = c.int_(lo, hi), b21 = c.int_(lo, hi);
     final result = a11 * b11 + a12 * b21;
     return Question(
       skillId: c.skillId,
@@ -177,8 +188,10 @@ void registerAdvanced() {
   });
 
   register('determinants', (c) {
-    final a = c.int_(1, 9), b = c.int_(1, 9);
-    final cc = c.int_(1, 9), d = c.int_(1, 9);
+    final lo = c.band(1, -9);
+    final hi = c.band(9, 20);
+    final a = c.int_(lo, hi), b = c.int_(lo, hi);
+    final cc = c.int_(lo, hi), d = c.int_(lo, hi);
     final det = a * d - b * cc;
     return Question(
       skillId: c.skillId,
@@ -196,8 +209,10 @@ void registerAdvanced() {
   });
 
   register('vectors', (c) {
-    final a = [c.int_(1, 8), c.int_(1, 8), c.int_(0, 6)];
-    final b = [c.int_(1, 8), c.int_(0, 6), c.int_(1, 8)];
+    final lo = c.band(0, -8);
+    final hi = c.band(8, 15);
+    final a = [c.int_(lo, hi), c.int_(lo, hi), c.int_(lo, hi)];
+    final b = [c.int_(lo, hi), c.int_(lo, hi), c.int_(lo, hi)];
     final dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     return Question(
       skillId: c.skillId,
@@ -218,8 +233,11 @@ void registerAdvanced() {
 
   register('geometry_3d', (c) {
     const triples = [[3, 4, 5], [6, 8, 10], [5, 12, 13], [8, 15, 17]];
-    final t = c.pick(triples);
-    final x1 = c.int_(-5, 5), y1 = c.int_(-5, 5), z1 = c.int_(-5, 5);
+    final t = c.pickByLevel(triples);
+    final reach = c.band(3, 12);
+    final x1 = c.int_(-reach, reach),
+        y1 = c.int_(-reach, reach),
+        z1 = c.int_(-reach, reach);
     return Question(
       skillId: c.skillId,
       prompt: 'Find the distance between the points\n\n'
@@ -238,8 +256,8 @@ void registerAdvanced() {
   });
 
   register('lpp', (c) {
-    final a = c.int_(2, 9), b = c.int_(2, 9);
-    final x = c.int_(1, 9), y = c.int_(1, 9);
+    final a = c.int_(2, c.band(9, 25)), b = c.int_(2, c.band(9, 25));
+    final x = c.int_(1, c.band(9, 30)), y = c.int_(1, c.band(9, 30));
     final z = a * x + b * y;
     return Question(
       skillId: c.skillId,
@@ -260,7 +278,10 @@ void registerAdvanced() {
   // -------------------------------------------------------------- trig
 
   register('trig_identities', (c) {
-    final which = c.pick(['pythagorean', 'tan', 'complement']);
+    // The Pythagorean identity is the one that gets quoted in class every
+    // week. The complementary-angle one is the one students have to think
+    // about, because nothing in it looks like anything else.
+    final which = c.pickByLevel(const ['pythagorean', 'tan', 'complement']);
     return switch (which) {
       'pythagorean' => Question(
           skillId: c.skillId,
@@ -304,21 +325,30 @@ void registerAdvanced() {
   });
 
   register('trig_equations', (c) {
-    const table = {'1/2': 30, '1': 90, '0': 0};
-    final key = c.pick(table.keys.toList());
-    final deg = table[key]!;
+    // Reading the table backwards for sin is the first step. Doing it for cos
+    // means remembering that cos runs the other way, and tan is a third table
+    // again - so which function is asked about is where the level sits.
+    final fn = c.pickByLevel(const ['sin', 'sin', 'cos', 'tan']);
+    const table = {
+      'sin': {'0': 0, '1/2': 30, '1': 90},
+      'cos': {'1': 0, '1/2': 60, '0': 90},
+      'tan': {'0': 0, '1': 45},
+    };
+    final options = table[fn]!;
+    final key = c.pick(options.keys.toList());
+    final deg = options[key]!;
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve  sin x = $key  for x between 0 and 90 degrees.\n\n'
+      prompt: 'Solve  $fn x = $key  for x between 0 and 90 degrees.\n\n'
           'Give the answer in degrees.',
       answer: '$deg',
       difficulty: c.difficulty,
       choices: _withAnswer(const ['0', '30', '45', '60', '90'], '$deg', c),
       steps: [
         'Read the standard angle table backwards.',
-        'sin $deg = $key, so x = $deg degrees.',
+        '$fn $deg = $key, so x = $deg degrees.',
       ],
-      hint: 'Which standard angle has that sine?',
+      hint: 'Which standard angle has that $fn?',
     );
   });
 
@@ -346,7 +376,11 @@ void registerAdvanced() {
   });
 
   register('probability_events', (c) {
-    final kind = c.pick(['twoheads', 'atleastone', 'sumseven']);
+    // All three at every level. The two coin questions are fixed - one
+    // question each - so keeping them for the easy levels and the dice for the
+    // hard ones left Easiest with two questions in total. The dice total below
+    // is where the level actually lives.
+    final kind = c.pick(const ['twoheads', 'atleastone', 'dicesum']);
     return switch (kind) {
       'twoheads' => Question(
           skillId: c.skillId,
@@ -375,19 +409,11 @@ void registerAdvanced() {
           ],
           hint: 'It is easier to count the one case with NO heads.',
         ),
-      _ => Question(
-          skillId: c.skillId,
-          prompt: 'Two dice are rolled.\n\n'
-              'What is the probability the total is 7? '
-              '(fraction in lowest terms)',
-          answer: Fraction(6, 36).toString(),
-          difficulty: c.difficulty,
-          steps: [
-            'There are 6 x 6 = 36 equally likely results.',
-            'Totals of 7: (1,6) (2,5) (3,4) (4,3) (5,2) (6,1) - that is 6.',
-            '6/36 = ${Fraction(6, 36)}.',
-          ],
-        ),
+      // Any total, not just seven. Fixing it at seven meant this whole skill
+      // had exactly three questions in it, so a worksheet asking for twenty
+      // was handed three - and the two-dice one is the question worth asking
+      // more than once anyway.
+      _ => _diceSum(c),
     };
   });
 
@@ -542,4 +568,32 @@ void registerAdvanced() {
 List<String> _withAnswer(List<String> pool, String answer, GenContext c) {
   final others = pool.where((e) => e != answer).toList()..shuffle(c.rng);
   return [answer, ...others.take(3)]..shuffle(c.rng);
+}
+
+/// The probability that two dice total a given number.
+///
+/// Seven is the one every textbook asks, and the ends of the range are the
+/// ones students find easiest, because there is only one way to roll them.
+/// So the level walks inwards from 2 and 12 towards the middle.
+Question _diceSum(GenContext c) {
+  final target = c.pickByLevel(const [2, 12, 3, 11, 4, 10, 5, 9, 6, 8, 7]);
+  final ways = 6 - (7 - target).abs();
+  final pairs = [
+    for (var d = 1; d <= 6; d++)
+      if (target - d >= 1 && target - d <= 6) '($d,${target - d})',
+  ];
+  return Question(
+    skillId: c.skillId,
+    prompt: 'Two dice are rolled.\n\n'
+        'What is the probability the total is $target? '
+        '(fraction in lowest terms)',
+    answer: Fraction(ways, 36).toString(),
+    difficulty: c.difficulty,
+    steps: [
+      'There are 6 x 6 = 36 equally likely results.',
+      'Totals of $target: ${pairs.join(' ')} - that is $ways.',
+      '$ways/36 = ${Fraction(ways, 36)}.',
+    ],
+    hint: 'Count the pairs that add to $target, out of 36.',
+  );
 }
