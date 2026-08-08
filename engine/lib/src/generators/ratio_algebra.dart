@@ -380,13 +380,13 @@ void registerRatioAlgebra() {
     final e = c.int_(1, c.band(5, 10));
     return Question(
       skillId: c.skillId,
-      prompt: 'Simplify:  ${a}x + ${b}y - ${d}x + ${e}y',
-      answer: '${a - d}x+${b + e}y',
+      prompt: 'Simplify:  ${term(a, 'x')} + ${term(b, 'y')} - ${term(d, 'x')} + ${term(e, 'y')}',
+      answer: '${term(a - d, 'x')}+${term(b + e, 'y')}',
       difficulty: c.difficulty,
       steps: [
-        'Group the x terms: ${a}x - ${d}x = ${a - d}x.',
-        'Group the y terms: ${b}y + ${e}y = ${b + e}y.',
-        'Answer: ${a - d}x + ${b + e}y.',
+        'Group the x terms: ${term(a, 'x')} - ${term(d, 'x')} = ${term(a - d, 'x')}.',
+        'Group the y terms: ${term(b, 'y')} + ${term(e, 'y')} = ${term(b + e, 'y')}.',
+        'Answer: ${term(a - d, 'x')} + ${term(b + e, 'y')}.',
       ],
       hint: 'You can only combine terms with the SAME letter.',
     );
@@ -400,14 +400,14 @@ void registerRatioAlgebra() {
     final ans = a * x * x - b * x + cc;
     return Question(
       skillId: c.skillId,
-      prompt: 'If x = $x, find the value of  ${a}x^2 - ${b}x + $cc',
+      prompt: 'If x = $x, find the value of  ${term(a, 'x')}^2 - ${term(b, 'x')} + $cc',
       answer: '$ans',
       difficulty: c.difficulty,
       choices: c.choicesAround(ans, distractors: [a * x * 2 - b * x + cc, ans + b]),
       steps: [
         'x^2 = $x x $x = ${x * x}.',
-        '${a}x^2 = $a x ${x * x} = ${a * x * x}.',
-        '${b}x = $b x $x = ${b * x}.',
+        '${term(a, 'x')}^2 = $a x ${x * x} = ${a * x * x}.',
+        '${term(b, 'x')} = $b x $x = ${b * x}.',
         '${a * x * x} - ${b * x} + $cc = $ans.',
       ],
       hint: 'Square x BEFORE multiplying by $a.',
@@ -441,14 +441,20 @@ void registerRatioAlgebra() {
     final q = (a - b) * x + p;
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve for x:   ${a}x + $p = ${b}x + $q',
+      prompt: 'Solve for x:   ${term(a, 'x')} + $p = ${term(b, 'x')} + $q',
       answer: '$x',
       difficulty: c.difficulty,
       choices: c.choicesAround(x, distractors: [x + 1, x - 1, q - p]),
       steps: [
-        'Move the x terms to one side: ${a}x - ${b}x = ${a - b}x.',
+        'Move the x terms to one side: ${term(a, 'x')} - ${term(b, 'x')} = ${term(a - b, 'x')}.',
         'Move the numbers to the other side: $q - $p = ${q - p}.',
-        '${a - b}x = ${q - p}, so x = ${q - p} / ${a - b} = $x.',
+        // Only divide when there is something to divide by. Once the
+        // coefficient stopped printing as "1x", this line read "x = 4, so
+        // x = 4 / 1 = 4" - a step that does nothing, spelled out.
+        if (a - b == 1)
+          '${term(a - b, 'x')} = ${q - p}, so x = $x.'
+        else
+          '${term(a - b, 'x')} = ${q - p}, so x = ${q - p} / ${a - b} = $x.',
       ],
       hint: 'Get all the x terms on one side first.',
     );
@@ -461,14 +467,14 @@ void registerRatioAlgebra() {
     final cc = r1 * r2;
     return Question(
       skillId: c.skillId,
-      prompt: 'Factorise:  x^2 + ${b}x + $cc\n\n'
+      prompt: 'Factorise:  x^2 + ${term(b, 'x')} + $cc\n\n'
           'Write as (x+p)(x+q) with p <= q, answer format:  p,q',
       answer: '${r1 <= r2 ? r1 : r2},${r1 <= r2 ? r2 : r1}',
       difficulty: c.difficulty,
       steps: [
         'Find two numbers that MULTIPLY to $cc and ADD to $b.',
         '$r1 x $r2 = $cc and $r1 + $r2 = $b.',
-        'So x^2 + ${b}x + $cc = (x + ${r1 <= r2 ? r1 : r2})(x + ${r1 <= r2 ? r2 : r1}).',
+        'So x^2 + ${term(b, 'x')} + $cc = (x + ${r1 <= r2 ? r1 : r2})(x + ${r1 <= r2 ? r2 : r1}).',
       ],
       hint: 'Two numbers: multiply to the last term, add to the middle term.',
     );
@@ -483,7 +489,7 @@ void registerRatioAlgebra() {
     final hi = r1 <= r2 ? r2 : r1;
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve by factorisation:  x^2 - ${b}x + $cc = 0\n\n'
+      prompt: 'Solve by factorisation:  x^2 - ${term(b, 'x')} + $cc = 0\n\n'
           'Give both roots smallest first, format:  a,b',
       answer: '$lo,$hi',
       difficulty: c.difficulty,
@@ -507,11 +513,11 @@ void registerRatioAlgebra() {
 void _registerLaterAlgebra() {
   register('algebra_expression', (c) {
     final k = c.int_(2, c.band(4, 9));
-    // n must differ from k, or the distractor "${n}x+$k" collides with the
-    // answer "${k}x+$n" and the same option appears twice.
+    // n must differ from k, or the distractor "${term(n, 'x')}+$k" collides with the
+    // answer "${term(k, 'x')}+$n" and the same option appears twice.
     final n = c.intExcept(1, c.band(6, 15), {k});
     final more = c.coin();
-    final answer = more ? '${k}x+$n' : '$k(x+$n)';
+    final answer = more ? '${term(k, 'x')}+$n' : '$k(x+$n)';
     return Question(
       skillId: c.skillId,
       prompt: more
@@ -521,16 +527,16 @@ void _registerLaterAlgebra() {
       answer: answer,
       difficulty: c.difficulty,
       choices: ({
-        '${k}x+$n',
+        '${term(k, 'x')}+$n',
         '$k(x+$n)',
-        '${n}x+$k',
+        '${term(n, 'x')}+$k',
         'x+$k+$n',
       }.toList()..shuffle(c.rng)),
       steps: more
           ? [
-              '"$k times a number" is ${k}x.',
+              '"$k times a number" is ${term(k, 'x')}.',
               '"$n more" means add $n.',
-              'So it is ${k}x + $n.',
+              'So it is ${term(k, 'x')} + $n.',
             ]
           : [
               'Do the adding first, so it goes in brackets: (x + $n).',
@@ -552,14 +558,14 @@ void _registerLaterAlgebra() {
     final middle = (minus ? -1 : 1) * 2 * a * b;
     return Question(
       skillId: c.skillId,
-      prompt: 'Expand (${a}x ${minus ? '-' : '+'} $b)^2.\n\n'
+      prompt: 'Expand (${term(a, 'x')} ${minus ? '-' : '+'} $b)^2.\n\n'
           'What is the coefficient of x?',
       answer: '$middle',
       difficulty: c.difficulty,
       steps: [
         '(p ${minus ? '-' : '+'} q)^2 = p^2 ${minus ? '-' : '+'} 2pq + q^2.',
-        'Here p = ${a}x and q = $b.',
-        '2pq = 2 x $a x $b = ${2 * a * b}, so the x term is ${middle}x.',
+        'Here p = ${term(a, 'x')} and q = $b.',
+        '2pq = 2 x $a x $b = ${2 * a * b}, so the x term is ${term(middle, 'x')}.',
       ],
       hint: 'The middle term is always 2 times the two parts multiplied.',
     );
@@ -582,8 +588,8 @@ void _registerLaterAlgebra() {
     return Question(
       skillId: c.skillId,
       prompt: 'Solve these equations together:\n\n'
-          '${a1}x + ${b1}y = $c1\n'
-          '${a2}x + ${b2}y = $c2\n\n'
+          '${term(a1, 'x')} + ${term(b1, 'y')} = $c1\n'
+          '${term(a2, 'x')} + ${term(b2, 'y')} = $c2\n\n'
           'Give your answer as  x,y',
       answer: '$x,$y',
       difficulty: c.difficulty,

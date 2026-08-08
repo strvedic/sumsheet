@@ -71,8 +71,8 @@ void registerAdvanced() {
         return Question(
           skillId: c.skillId,
           prompt: squared
-              ? 'If f(x) = ${a}x^2 + $b, find f($x).'
-              : 'If f(x) = ${a}x + $b, find f($x).',
+              ? 'If f(x) = ${term(a, 'x')}^2 + $b, find f($x).'
+              : 'If f(x) = ${term(a, 'x')} + $b, find f($x).',
           answer: '$ans',
           difficulty: c.difficulty,
           choices: c.choicesAround(ans, distractors: [a * x + b, a + b + x]),
@@ -90,7 +90,7 @@ void registerAdvanced() {
         final out = a * x + b;
         return Question(
           skillId: c.skillId,
-          prompt: 'If f(x) = ${a}x + $b and f(k) = $out, find k.',
+          prompt: 'If f(x) = ${term(a, 'x')} + $b and f(k) = $out, find k.',
           answer: '$x',
           difficulty: c.difficulty,
           choices: c.choicesAround(x, distractors: [out - b, out ~/ a, a + b]),
@@ -109,7 +109,7 @@ void registerAdvanced() {
         final ans = a * inner + b;
         return Question(
           skillId: c.skillId,
-          prompt: 'If f(x) = ${a}x + $b and g(x) = x + $g,\n\n'
+          prompt: 'If f(x) = ${term(a, 'x')} + $b and g(x) = x + $g,\n\n'
               'find f(g($x)).',
           answer: '$ans',
           difficulty: c.difficulty,
@@ -288,7 +288,10 @@ void registerAdvanced() {
           distractors: [a[0] * b[0], a.reduce((x, y) => x + y)]),
       steps: [
         'Multiply matching components, then add them all.',
-        '(${a[0]}x${b[0]}) + (${a[1]}x${b[1]}) + (${a[2]}x${b[2]})',
+        // Spaces round the times sign, because these components are signed.
+        // Written closed up, "(1x-2)" reads as the algebraic 1x - 2 rather
+        // than as 1 multiplied by -2.
+        '(${a[0]} x ${b[0]}) + (${a[1]} x ${b[1]}) + (${a[2]} x ${b[2]})',
         '= ${a[0] * b[0]} + ${a[1] * b[1]} + ${a[2] * b[2]} = $dot.',
       ],
       hint: 'The dot product gives a single number, not a vector.',
@@ -325,7 +328,7 @@ void registerAdvanced() {
     final z = a * x + b * y;
     return Question(
       skillId: c.skillId,
-      prompt: 'For the objective function Z = ${a}x + ${b}y,\n\n'
+      prompt: 'For the objective function Z = ${term(a, 'x')} + ${term(b, 'y')},\n\n'
           'find the value of Z at the corner point ($x, $y).',
       answer: '$z',
       difficulty: c.difficulty,
@@ -537,15 +540,15 @@ void registerAdvanced() {
     final coeff = a * n;
     return Question(
       skillId: c.skillId,
-      prompt: 'Differentiate  y = ${a}x^$n\n\n'
-          'The answer is kx^${n - 1}. What is k?',
+      prompt: 'Differentiate  y = ${term(a, 'x', power: n)}\n\n'
+          'The answer is k${term(1, 'x', power: n - 1)}. What is k?',
       answer: '$coeff',
       difficulty: c.difficulty,
       choices: c.choicesAround(coeff, distractors: [a, n, a + n]),
       steps: [
         'Bring the power down to the front, then take one off the power.',
         '$a x $n = $coeff, and the power becomes ${n - 1}.',
-        'dy/dx = ${coeff}x^${n - 1}.',
+        'dy/dx = ${term(coeff, 'x', power: n - 1)}.',
       ],
       hint: 'Multiply by the power, then reduce the power by 1.',
     );
@@ -558,14 +561,14 @@ void registerAdvanced() {
     final slope = 2 * a * x;
     return Question(
       skillId: c.skillId,
-      prompt: 'For the curve  y = ${a}x^2,\n\n'
+      prompt: 'For the curve  y = ${term(a, 'x')}^2,\n\n'
           'find the slope of the tangent at x = $x.',
       answer: '$slope',
       difficulty: c.difficulty,
       choices: c.choicesAround(slope, distractors: [a * x * x, a * x]),
       steps: [
         'The slope of a curve at a point is the derivative there.',
-        'dy/dx = ${2 * a}x.',
+        'dy/dx = ${term(2 * a, 'x')}.',
         'At x = $x: ${2 * a} x $x = $slope.',
       ],
       hint: 'Differentiate first, then substitute.',
@@ -578,15 +581,16 @@ void registerAdvanced() {
     final coeff = a ~/ (n + 1);
     return Question(
       skillId: c.skillId,
-      prompt: 'Integrate  ${a}x^$n  with respect to x.\n\n'
-          'The answer is kx^${n + 1} + C. What is k?',
+      prompt: 'Integrate  ${term(a, 'x', power: n)}  with respect to x.\n\n'
+          'The answer is k${term(1, 'x', power: n + 1)} + C. What is k?',
       answer: '$coeff',
       difficulty: c.difficulty,
       choices: c.choicesAround(coeff, distractors: [a, a * (n + 1), n + 1]),
       steps: [
         'Integration is the reverse of differentiating.',
         'Raise the power by 1, then divide by the new power.',
-        '$a / ${n + 1} = $coeff, so the answer is ${coeff}x^${n + 1} + C.',
+        '$a / ${n + 1} = $coeff, so the answer is '
+            '${term(coeff, 'x', power: n + 1)} + C.',
       ],
       hint: 'Add one to the power, then divide by that new power.',
     );
@@ -615,14 +619,14 @@ void registerAdvanced() {
     final k = c.int_(2, c.band(4, 9));
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve  dy/dx = ${k}x\n\n'
+      prompt: 'Solve  dy/dx = ${term(k, 'x')}\n\n'
           'The answer is y = kx^2 + C. What is k?',
       answer: (Fraction(k, 2)).toString(),
       difficulty: c.difficulty,
       steps: [
         'Integrate both sides with respect to x.',
-        'The integral of ${k}x is $k x^2 / 2.',
-        'So y = ${Fraction(k, 2)}x^2 + C.',
+        'The integral of ${term(k, 'x')} is $k x^2 / 2.',
+        'So y = ${term(Fraction(k, 2), 'x')}^2 + C.',
       ],
       hint: 'Integrate the right hand side, and do not forget the + C.',
     );

@@ -30,6 +30,43 @@ String mathify(String s) =>
       (m) => '√${m.group(1)}',
     );
 
+/// Writes a coefficient against a variable the way algebra is written.
+///
+///     term(3, 'x')   ->  "3x"
+///     term(1, 'x')   ->  "x"
+///     term(-1, 'x')  ->  "-x"
+///
+/// Nobody writes "1x". Generators built terms by interpolating the coefficient
+/// straight in - `'${a}x + $b'` - so whenever the coefficient came out 1 the
+/// sheet printed "1x^2 + 7x", "Solve 2x + 1 = 1x + 11", and an answer key
+/// saying "1x+10y". Each is correct arithmetic and none of it is how the
+/// textbook the child is working from writes it.
+///
+/// [power] follows the same rule one level up, because "4x^1" is the same kind
+/// of wrong as "1x" - the exponent of one is never written either:
+///
+///     term(4, 'x', power: 3)  ->  "4x^3"
+///     term(4, 'x', power: 1)  ->  "4x"
+///     term(4, 'x', power: 0)  ->  "4"
+///
+/// A coefficient of 0 is deliberately NOT dropped. A vanishing term has to be
+/// left out by whoever is building the expression, because removing it here
+/// would leave a dangling "+" in the middle of the line.
+///
+/// Takes any [Object] and judges it by what it prints as, so a [Fraction]
+/// coefficient works too: `Fraction(2, 2)` reduces to 1, and "1x^2 + C" is as
+/// wrong coming out of an integral as it is anywhere else.
+String term(Object coefficient, String variable, {int power = 1}) {
+  // x^0 is 1, so the variable disappears and the coefficient stands alone.
+  if (power == 0) return '$coefficient';
+  final body = power == 1 ? variable : '$variable^$power';
+  return switch ('$coefficient') {
+    '1' => body,
+    '-1' => '-$body',
+    final c => '$c$body',
+  };
+}
+
 class Question {
   Question({
     required this.skillId,
@@ -93,6 +130,13 @@ class Question {
     // contains "rem".
     t = t.replaceAll('remainder', 'r').replaceAll('rem', 'r');
     t = t.replaceAll(' ', '');
+    // "x + 10y" and "1x + 10y" are the same answer. The sheet now prints the
+    // first, but a student who writes the coefficient in has done the algebra
+    // correctly and must not be marked wrong over notation - and this also
+    // keeps every answer key written before the change still matching.
+    //
+    // The lookbehind matters: the 1 in "21x" is part of twenty-one.
+    t = t.replaceAll(RegExp(r'(?<![\d.])1(?=[a-z])'), '');
     // Trim trailing zeros on decimals so 0.50 == 0.5 and 4.0 == 4.
     if (RegExp(r'^-?\d+\.\d+$').hasMatch(t)) {
       t = t.replaceFirst(RegExp(r'0+$'), '');

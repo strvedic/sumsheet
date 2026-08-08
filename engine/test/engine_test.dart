@@ -529,6 +529,72 @@ void main() {
       }
     });
 
+    test('algebra is written the way algebra is written', () {
+      // Nobody writes "1x" or "x^1". Generators built terms by interpolating
+      // the coefficient straight in, so whenever it came out 1 the sheet
+      // printed "1x^2 + 7x", "Solve 2x + 1 = 1x + 11", "Integrate 4x^1", and
+      // an answer key reading "1x+10y". Correct arithmetic, and not how the
+      // textbook the child is working from writes any of it.
+      //
+      // Checked everywhere a student can see: the prompt, the answer, the
+      // worked solution, the hint, and the multiple-choice options - the fault
+      // reached all five.
+      //
+      // Only x, y, z and k. "1h 30m" is a correct way to write an hour and a
+      // half, and the components in a dot product are multiplied with an "x",
+      // so "1 x 5" is not a coefficient either.
+      final coefficientOne = RegExp(r'(?<![\d.])-?1(?=[xyzk]\b)');
+      final powerOne = RegExp(r'[a-z]\^1(?!\d)');
+      final offenders = <String>{};
+      for (final skill in map.all.where(hasGenerator)) {
+        for (var d = 1; d <= 5; d++) {
+          for (var seed = 0; seed < 40; seed++) {
+            final q = generateQuestion(skill: skill, difficulty: d, seed: seed);
+            for (final text in [
+              q.prompt,
+              q.answer,
+              ...q.steps,
+              if (q.hint != null) q.hint!,
+              ...q.choices,
+            ]) {
+              if (coefficientOne.hasMatch(text) || powerOne.hasMatch(text)) {
+                offenders.add('${skill.id}: ${text.replaceAll('\n', ' ')}');
+              }
+            }
+          }
+        }
+      }
+      expect(offenders, isEmpty,
+          reason: 'these print a redundant 1:\n${offenders.take(10).join('\n')}');
+    });
+
+    test('a coefficient of 1 typed in is still marked correct', () {
+      // The sheet prints "x + 8y", but a student who writes "1x + 8y" has done
+      // the algebra right and must not lose the mark over notation. This also
+      // keeps every answer key printed before the change still matching.
+      final q = Question(
+        skillId: 'algebra-like-terms',
+        prompt: 'Simplify: 4x + 4y - 3x + 4y',
+        answer: 'x+8y',
+        difficulty: 3,
+        steps: const ['-'],
+      );
+      expect(q.isCorrect('x+8y'), isTrue);
+      expect(q.isCorrect('1x+8y'), isTrue);
+      expect(q.isCorrect('x + 8y'), isTrue);
+      // And it must not swallow the 1 inside a larger number.
+      final r = Question(
+        skillId: 'x',
+        prompt: 'p',
+        answer: '21x',
+        difficulty: 3,
+        steps: const ['-'],
+      );
+      expect(r.isCorrect('21x'), isTrue);
+      expect(r.isCorrect('2x'), isFalse,
+          reason: 'the 1 in 21 is part of twenty-one, not a coefficient');
+    });
+
     test('same seed reproduces the identical question', () {
       for (final skill in map.all.where(hasGenerator).take(20)) {
         final a = generateQuestion(skill: skill, difficulty: 3, seed: 12345);

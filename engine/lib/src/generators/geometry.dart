@@ -729,7 +729,7 @@ void registerGeometry() {
       steps: [
         'Distance = square root of ((x2-x1) squared + (y2-y1) squared).',
         'Differences: ${t[0]} across and ${t[1]} up.',
-        '${t[0]}x${t[0]} + ${t[1]}x${t[1]} = ${t[2] * t[2]}, and the square '
+        '${t[0]} x ${t[0]} + ${t[1]} x ${t[1]} = ${t[2] * t[2]}, and the square '
             'root of ${t[2] * t[2]} is ${t[2]}.',
       ],
       hint: 'It is Pythagoras with the two gaps as the legs.',

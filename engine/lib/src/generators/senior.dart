@@ -257,7 +257,7 @@ void registerSenior() {
     if (c.coin()) {
       return Question(
         skillId: c.skillId,
-        prompt: 'What is the degree of  ${lead}x^$deg + ${mid}x + $constant ?',
+        prompt: 'What is the degree of  ${term(lead, 'x')}^$deg + ${term(mid, 'x')} + $constant ?',
         answer: '$deg',
         difficulty: c.difficulty,
         choices: c.choicesAround(deg, distractors: [lead, deg + 1, 1]),
@@ -272,7 +272,7 @@ void registerSenior() {
     final b2 = c.int_(1, 9);
     return Question(
       skillId: c.skillId,
-      prompt: 'Add:  (${lead}x^2 + ${mid}x) + (${a2}x^2 + ${b2}x)\n\n'
+      prompt: 'Add:  (${term(lead, 'x')}^2 + ${term(mid, 'x')}) + (${term(a2, 'x')}^2 + ${term(b2, 'x')})\n\n'
           'What is the coefficient of x^2 in the answer?',
       answer: '${lead + a2}',
       difficulty: c.difficulty,
@@ -293,15 +293,15 @@ void registerSenior() {
     final rhs = a * x + b * y;
     return Question(
       skillId: c.skillId,
-      prompt: 'In the equation  ${a}x + ${b}y = $rhs,\n\n'
+      prompt: 'In the equation  ${term(a, 'x')} + ${term(b, 'y')} = $rhs,\n\n'
           'if x = $x, what is y?',
       answer: '$y',
       difficulty: c.difficulty,
       choices: c.choicesAround(y, distractors: [rhs, x, y + 1]),
       steps: [
         'Put x = $x into the equation.',
-        '$a x $x = ${a * x}, so ${a * x} + ${b}y = $rhs.',
-        '${b}y = $rhs - ${a * x} = ${rhs - a * x}.',
+        '$a x $x = ${a * x}, so ${a * x} + ${term(b, 'y')} = $rhs.',
+        '${term(b, 'y')} = $rhs - ${a * x} = ${rhs - a * x}.',
         'y = ${rhs - a * x} / $b = $y.',
       ],
       hint: 'Substitute x first, then solve what is left.',
@@ -318,7 +318,7 @@ void registerSenior() {
     if (c.coin()) {
       return Question(
         skillId: c.skillId,
-        prompt: 'For  x^2 ${b < 0 ? '-' : '+'} ${b.abs()}x + $cc = 0,\n\n'
+        prompt: 'For  x^2 ${b < 0 ? '-' : '+'} ${term(b.abs(), 'x')} + $cc = 0,\n\n'
             'find the discriminant.',
         answer: '$disc',
         difficulty: c.difficulty,
@@ -335,7 +335,7 @@ void registerSenior() {
     final hi = r1 <= r2 ? r2 : r1;
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve  x^2 ${b < 0 ? '-' : '+'} ${b.abs()}x + $cc = 0 '
+      prompt: 'Solve  x^2 ${b < 0 ? '-' : '+'} ${term(b.abs(), 'x')} + $cc = 0 '
           'using the formula.\n\nGive both roots, smallest first:  a,b',
       answer: '$lo,$hi',
       difficulty: c.difficulty,
@@ -358,14 +358,14 @@ void registerSenior() {
     final less = c.coin();
     return Question(
       skillId: c.skillId,
-      prompt: 'Solve:  ${a}x + $b ${less ? '<' : '>'} $rhs\n\n'
+      prompt: 'Solve:  ${term(a, 'x')} + $b ${less ? '<' : '>'} $rhs\n\n'
           'The answer is x ${less ? '<' : '>'} k. What is k?',
       answer: '$x',
       difficulty: c.difficulty,
       choices: c.choicesAround(x, distractors: [rhs, rhs - b, a * x]),
       steps: [
         'Solve it exactly like an equation.',
-        'Take $b from both sides: ${a}x ${less ? '<' : '>'} ${rhs - b}.',
+        'Take $b from both sides: ${term(a, 'x')} ${less ? '<' : '>'} ${rhs - b}.',
         'Divide both sides by $a: x ${less ? '<' : '>'} $x.',
         'Note: dividing by a NEGATIVE number would flip the sign. Here $a is '
             'positive, so it stays.',

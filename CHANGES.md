@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 39.
+Baseline when copied: 24 tests passing. Now: 41.
 
 ---
 
@@ -509,7 +509,55 @@ Every `bodmas` prompt was also re-evaluated by an independent
 recursive-descent parser honouring brackets and precedence - 1500 checked, 0
 disagreed with their own answer.
 
-## 17. Removed, not ported
+## 17. "1x" and "x^1"
+
+`lib/src/question.dart` and four generator files
+
+Generators built algebraic terms by interpolating the coefficient straight in -
+`'${a}x + $b'` - so whenever it came out 1 the sheet printed `1x^2 + 7x`,
+`Solve 2x + 1 = 1x + 11`, `Integrate 4x^1`, and an answer key reading
+`1x+10y`. Every one is correct arithmetic and none of it is how the textbook
+the child is working from writes it.
+
+Measured before fixing: **11 skills**, reaching the prompt, the answer, the
+worked solution *and* the multiple-choice options.
+
+`term(coefficient, variable, {power})` now builds them - 70 call sites - and
+takes any `Object`, because `Fraction(2, 2)` reduces to 1 and "1x^2 + C" is as
+wrong coming out of an integral as anywhere else. A coefficient of 0 is
+deliberately not dropped: a vanishing term has to be left out by whoever builds
+the expression, since removing it inside the helper would leave a dangling "+"
+mid-line.
+
+**Two false positives worth recording**, both found by looking at what the scan
+flagged rather than trusting it:
+
+- `time-calc` answers "1h 30m", which is the correct way to write an hour and a
+  half.
+- `vectors` and `pythagoras` write multiplication as `x` between two values, so
+  `(-1x-5)` is -1 times -5. Those two lines were left alone - and then given
+  **spaces** round the sign, because closed up `(1x-2)` genuinely reads as the
+  algebraic 1x - 2.
+
+**Answer matching was widened, not narrowed.** `_normalise` now drops a
+coefficient of 1 before a letter, so a student who writes `1x+8y` is still
+right, and every answer key printed before this change still matches. The
+lookbehind matters: the 1 in `21x` is part of twenty-one.
+
+Two smaller things the change exposed:
+
+- `Integrate 4x^1` and `dy/dx = kx^1` - an exponent of 1 is not written either,
+  so `term` takes a `power`.
+- `linear-eq-multistep` then read "x = 4, so x = 4 / 1 = 4" - a step that does
+  nothing, spelled out. It now divides only when there is something to divide
+  by.
+
+**Tests added:** `algebra is written the way algebra is written`, which checks
+prompt, answer, steps, hint and choices across every skill at every level, and
+`a coefficient of 1 typed in is still marked correct`, which pins both
+directions of the matching including the `21x` case.
+
+## 18. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
