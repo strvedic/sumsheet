@@ -14,6 +14,7 @@ class WorksheetRequest {
     required this.difficulty,
     required this.centreName,
     required this.includeAnswerKey,
+    required this.includeSolutions,
     required this.workingLines,
   });
 
@@ -24,6 +25,7 @@ class WorksheetRequest {
   final int difficulty;
   final String? centreName;
   final bool includeAnswerKey;
+  final bool includeSolutions;
   final int workingLines;
 }
 
@@ -62,6 +64,7 @@ Future<BuiltWorksheet> buildWorksheet(
     heading: request.heading,
     curriculumLabel: request.curriculumLabel,
     includeAnswerKey: request.includeAnswerKey,
+    includeSolutions: request.includeSolutions,
     workingLines: request.workingLines,
   ).build();
 

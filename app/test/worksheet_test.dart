@@ -28,6 +28,13 @@ void main() {
             difficulty: 3,
             centreName: 'Test Centre',
             includeAnswerKey: true,
+            // On here on purpose. This is the only test that walks every
+            // chapter the form offers, so it is the one place the worked
+            // solutions of every reachable skill get put on paper - and the
+            // PDF library complains about a character it cannot draw while
+            // building the sheet quite happily, which is how the counting
+            // objects vanished twice before.
+            includeSolutions: true,
             workingLines: 2,
           ),
           seed: 7,
@@ -61,6 +68,7 @@ void main() {
         difficulty: 3,
         centreName: null,
         includeAnswerKey: true,
+        includeSolutions: false,
         workingLines: 2,
       ),
       seed: 7,

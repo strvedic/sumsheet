@@ -287,6 +287,7 @@ class WorksheetBuilder {
     this.heading,
     this.curriculumLabel,
     this.includeAnswerKey = true,
+    this.includeSolutions = false,
     this.workingLines = 2,
   });
 
@@ -311,6 +312,17 @@ class WorksheetBuilder {
   final String? curriculumLabel;
 
   final bool includeAnswerKey;
+
+  /// Print the worked solution for every question, not just the answer.
+  ///
+  /// Every question has carried one since the engine was written - that is the
+  /// point of `Question.steps`, so a student who gets stuck never hits a dead
+  /// end. The worksheet threw all of it away and printed the bare answer, which
+  /// tells a child they were wrong and nothing about where.
+  ///
+  /// Off by default all the same. It is several more pages, and a teacher
+  /// photocopying thirty of these is paying for the paper.
+  final bool includeSolutions;
 
   /// Ruled lines printed under each question for the student to work in.
   ///
@@ -411,7 +423,118 @@ class WorksheetBuilder {
       );
     }
 
+    if (includeSolutions) {
+      doc.addPage(
+        // MultiPage, not Page: twenty worked solutions do not fit on one sheet
+        // and a Page that overflows throws rather than continuing.
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.fromLTRB(38, 34, 38, 34),
+          footer: (ctx) => pw.Container(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            ),
+          ),
+          build: (ctx) => [
+            pw.Text(
+              'Worked solutions',
+              style: pw.TextStyle(fontSize: 17, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              '${heading ?? skill.name}  -  $dateStr',
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+            ),
+            pw.SizedBox(height: 14),
+            for (var i = 0; i < questions.length; i++) _solution(i),
+          ],
+        ),
+      );
+    }
+
     return doc.save();
+  }
+
+  /// The hint printed just above solution [i], if any.
+  String? _hintBefore(int i) => i == 0 ? null : questions[i - 1].hint;
+
+  /// One question worked through: what was asked, how it is done, what it comes
+  /// to.
+  ///
+  /// The question is repeated rather than referred to by number, so the page
+  /// can be read on its own at the kitchen table without the worksheet next to
+  /// it. The picture is not repeated - the answer is printed alongside, which
+  /// makes the entry unambiguous without drawing twenty shapes a second time.
+  pw.Widget _solution(int i) {
+    final q = questions[i];
+    // A counting question keeps its objects in the prompt as U+25CF, which this
+    // font cannot draw and drops without a word. Here the count is in the
+    // answer anyway, so the words alone are enough.
+    final asked = PictureCount.tryParse(q)?.question ?? q.prompt;
+    // Wrapped in a Stack purely to stop MultiPage splitting it. A Column can
+    // be broken across a page, and a solution broken in half leaves "Answer:
+    // 17/12" alone at the top of the next page with no question and no number
+    // above it - unreadable, and it looks like a printing fault. A Stack is
+    // not a SpanningWidget, so the whole solution moves to the next page
+    // instead.
+    return pw.Stack(
+      children: [
+        pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 11),
+          padding: const pw.EdgeInsets.only(left: 10, bottom: 9),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(left: pw.BorderSide(color: _bandEdge, width: 2)),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              mathText(
+                '${i + 1}.  ${asked.replaceAll('\n\n', '  ')}',
+                style: pw.TextStyle(
+                    fontSize: 10.5, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 5),
+              for (final step in q.steps)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 3),
+                  child: mathText(
+                    step,
+                    style: const pw.TextStyle(
+                        fontSize: 10, lineSpacing: 1.5, color: _numberLabel),
+                  ),
+                ),
+              pw.SizedBox(height: 4),
+              mathText(
+                'Answer:  ${q.answer}',
+                style: pw.TextStyle(
+                    fontSize: 10.5, fontWeight: pw.FontWeight.bold),
+              ),
+              // The nudge that comes before the full solution. A teacher
+              // marking at the desk wants to point rather than tell, and this
+              // is the pointing.
+              //
+              // Skipped when it just said the same thing. Most hints are
+              // written per skill rather than per question, so a sheet of
+              // twelve unlike-fraction sums printed "You cannot add until the
+              // bottom numbers match" twelve times, and twelve identical
+              // italic lines are read as decoration and then not read at all.
+              if (q.hint != null && q.hint != _hintBefore(i)) ...[
+                pw.SizedBox(height: 4),
+                mathText(
+                  'Hint to give:  ${q.hint}',
+                  style: pw.TextStyle(
+                    fontSize: 9.5,
+                    color: _numberLabel,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   pw.Widget _title(String dateStr) => pw.Column(

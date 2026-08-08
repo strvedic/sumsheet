@@ -610,7 +610,15 @@ void main() {
             final q = generateQuestion(skill: skill, difficulty: d, seed: seed);
             // pdfSafe is what the sheet actually prints - it rewrites the
             // few characters the engine emits that the font cannot draw.
-            final bad = unprintableInPdf(pdfSafe(q.prompt));
+            //
+            // Steps and hints are checked too now that the solutions page
+            // prints them. Nothing had ever put them on paper before, so
+            // nothing had ever checked they could be.
+            final bad = [
+              unprintableInPdf(pdfSafe(q.prompt)),
+              for (final s in q.steps) unprintableInPdf(pdfSafe(s)),
+              if (q.hint != null) unprintableInPdf(pdfSafe(q.hint!)),
+            ].join();
             if (bad.isEmpty) continue;
             if (PictureCount.tryParse(q) != null) continue;
             offenders[skill.id] = bad;
@@ -670,6 +678,39 @@ void main() {
         workingLines: 3,
       ).build();
       expect(bytes.length, greaterThan(1000));
+    });
+
+    test('worked solutions are printed, and only when asked for', () async {
+      // Every question has carried a worked solution since the engine was
+      // written. The worksheet printed the bare answer and threw the rest
+      // away, so a child who got it wrong learnt only that they were wrong.
+      final skill = map['fraction-addsub-unlike'];
+      final questions = generatePractice(skill: skill, count: 20, seed: 3);
+      // Worth asserting: a solutions page for a skill with no steps would be
+      // blank pages, and nothing else in the suite would notice.
+      for (final q in questions) {
+        expect(q.steps, isNotEmpty, reason: '${q.prompt} has no solution');
+      }
+
+      Future<int> size({required bool solutions}) async => (await
+              WorksheetBuilder(
+        skill: skill,
+        questions: questions,
+        includeSolutions: solutions,
+      ).build())
+          .length;
+
+      final without = await size(solutions: false);
+      final with_ = await size(solutions: true);
+      expect(with_, greaterThan(without),
+          reason: 'asking for solutions produced no extra pages');
+      // Off unless asked: a teacher photocopying thirty of these pays for the
+      // paper, so this must never turn itself on.
+      expect(
+        (await WorksheetBuilder(skill: skill, questions: questions).build())
+            .length,
+        without,
+      );
     });
 
     test('a sheet built from a chapter is named after the chapter', () async {

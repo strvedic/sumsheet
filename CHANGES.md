@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 36.
+Baseline when copied: 24 tests passing. Now: 37.
 
 ---
 
@@ -400,7 +400,52 @@ dice total, not only seven) and `constructions` from 3 to 8.
 **Test added:** `the level a teacher picks changes the questions, for every
 skill` - it re-runs the measurement and names any skill that goes flat.
 
-## 15. Removed, not ported
+## 15. Worked solutions were generated for every question, then binned
+
+`lib/src/worksheet.dart`
+
+`Question.steps` has existed since the engine was written, and the doc comment
+says why: *"A student who gets stuck must never hit a dead end - that is the
+difference between practice that builds confidence and practice that kills
+it."* Every question carries a full worked solution and most carry a hint.
+
+`worksheet.dart` referenced `.steps`, `.hint` and `.choices` **zero times**.
+The answer key printed the bare answer, so a child who got it wrong learnt
+only that they were wrong.
+
+`includeSolutions` adds a "Worked solutions" section: the question repeated so
+the page stands alone, the steps, the answer, and the hint labelled *"Hint to
+give"* for a teacher marking at the desk. Off by default - it is several more
+pages and a teacher photocopying thirty of these pays for the paper.
+
+Three things that only showed up on the printed page:
+
+- **A solution split across a page break** left `Answer: 17/12` alone at the
+  top of the next page with no question and no number above it. Each solution
+  is wrapped in a `Stack`, which is not a `SpanningWidget`, so `MultiPage`
+  moves the whole thing rather than cutting it.
+- **The hint repeated twelve times.** Hints are written per skill, not per
+  question, so a sheet of unlike-fraction sums printed "You cannot add until
+  the bottom numbers match" on every one. Twelve identical italic lines read as
+  decoration and then get skipped. A hint is now suppressed when it repeats the
+  one above it.
+- **Counting questions** keep their objects in the prompt as U+25CF, so the
+  solutions page uses `PictureCount`'s stripped wording, as the cards do.
+
+**Test changed:** `nothing a generator prints is silently dropped by the PDF
+font` now checks steps and hints too. Nothing had ever put them on paper, so
+nothing had ever checked they could be printed.
+
+**Test added:** `worked solutions are printed, and only when asked for`, which
+also asserts every question in the sample has a non-empty `steps` - a skill
+with no solution would otherwise produce blank pages that nothing notices.
+
+The app test that walks **every** chapter the form offers now builds with
+solutions on, so the steps of every reachable skill get put on paper once per
+run. That is what catches a dropped glyph: the PDF library warns and builds the
+sheet quite happily.
+
+## 16. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

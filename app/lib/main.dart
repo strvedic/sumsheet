@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage> {
   int _count = 20;
   int _difficulty = 3;
   bool _answerKey = true;
+  bool _solutions = false;
   bool _workingSpace = false;
   final _centre = TextEditingController();
 
@@ -97,6 +98,7 @@ class _HomePageState extends State<HomePage> {
           difficulty: _difficulty,
           centreName: _centre.text.trim().isEmpty ? null : _centre.text.trim(),
           includeAnswerKey: _answerKey,
+          includeSolutions: _solutions,
           workingLines: _workingSpace ? 4 : 2,
         ),
         seed: Random().nextInt(1000000),
@@ -236,6 +238,17 @@ class _HomePageState extends State<HomePage> {
                         value: _answerKey,
                         onChanged: (v) => setState(() => _answerKey = v),
                         title: const Text('Answer key on the last page'),
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _solutions,
+                        onChanged: (v) => setState(() => _solutions = v),
+                        title: const Text('Worked solutions, step by step'),
+                        subtitle: const Text(
+                          'Every question worked through, with the hint to '
+                          'give. Adds pages.',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
