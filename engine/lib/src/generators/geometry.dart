@@ -506,25 +506,93 @@ void registerGeometry() {
   });
 
   register('circle_parts', (c) {
+    // Radius to diameter and back was the whole skill - two questions, one of
+    // them the other read backwards. A Class 9 circle chapter also names the
+    // parts, and has two facts about chords that are the point of the chapter:
+    // the perpendicular from the centre bisects a chord, and the longest chord
+    // is the diameter.
     final r = c.int_(3, c.band(12, 40));
-    if (c.coin()) {
-      return Question(
-        skillId: c.skillId,
-        prompt: 'A circle has a radius of $r cm. What is its diameter?',
-        answer: '${r * 2}',
-        difficulty: c.difficulty,
-        choices: c.choicesAround(r * 2, distractors: [r, r + 2, r * 4]),
-        steps: ['Diameter = 2 x radius.', '2 x $r = ${r * 2}.'],
-      );
+
+    switch (c.variantByLevel(5)) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A circle has a radius of $r cm. What is its diameter?',
+          answer: '${r * 2}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(r * 2, distractors: [r, r + 2, r * 4]),
+          steps: ['Diameter = 2 x radius.', '2 x $r = ${r * 2}.'],
+        );
+      case 1:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A circle has a diameter of ${r * 2} cm. What is its radius?',
+          answer: '$r',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(r, distractors: [r * 2, r * 4, r + 1]),
+          steps: ['Radius = diameter / 2.', '${r * 2} / 2 = $r.'],
+        );
+      case 2:
+        // Naming the parts. Half the marks in this chapter are vocabulary, and
+        // a sheet of arithmetic never once asks for the words.
+        const parts = {
+          'a line from the centre to the edge': 'radius',
+          'a line right across, through the centre': 'diameter',
+          'a line joining any two points on the edge': 'chord',
+          'the distance all the way round the outside': 'circumference',
+          'a line that touches the circle at exactly one point': 'tangent',
+          'part of the edge between two points': 'arc',
+        };
+        final desc = c.pickByLevel(parts.keys.toList());
+        final name = parts[desc]!;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What do we call $desc?',
+          answer: name,
+          difficulty: c.difficulty,
+          choices: _withAnswer(parts.values.toList(), name, c),
+          steps: ['$desc is called the $name.'],
+        );
+      case 3:
+        // The longest chord. Students reach for a number and the answer is a
+        // word, which is exactly why it is worth asking.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A circle has a radius of $r cm.\n\n'
+              'How long is the longest chord that can be drawn in it?',
+          answer: '${r * 2}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(r * 2, distractors: [r, r * 4, r + r ~/ 2]),
+          steps: [
+            'The longest chord in any circle is the one through the centre.',
+            'That chord is the diameter: 2 x $r = ${r * 2} cm.',
+          ],
+          hint: 'Which chord passes through the centre?',
+        );
+      default:
+        // The perpendicular from the centre bisects the chord. Built from a
+        // Pythagorean triple so the half-chord is a whole number.
+        final t = c.pickByLevel(const [[3, 4, 5], [6, 8, 10], [5, 12, 13],
+          [8, 15, 17], [9, 12, 15]]);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A chord of length ${2 * t[0]} cm is drawn in a circle of '
+              'radius ${t[2]} cm.\n\n'
+              'How far is the chord from the centre?',
+          answer: '${t[1]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(t[1], distractors: [t[0], t[2], t[2] - t[0]]),
+          steps: [
+            'The perpendicular from the centre cuts the chord exactly in half.',
+            'That gives a right-angled triangle: half the chord is ${t[0]}, '
+                'the radius is ${t[2]}.',
+            '${t[2]} x ${t[2]} - ${t[0]} x ${t[0]} = ${t[1] * t[1]}, and the '
+                'square root of ${t[1] * t[1]} is ${t[1]} cm.',
+          ],
+          hint: 'Drop a perpendicular from the centre and use Pythagoras on '
+              'half the chord.',
+        );
     }
-    return Question(
-      skillId: c.skillId,
-      prompt: 'A circle has a diameter of ${r * 2} cm. What is its radius?',
-      answer: '$r',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(r, distractors: [r * 2, r * 4, r + 1]),
-      steps: ['Radius = diameter / 2.', '${r * 2} / 2 = $r.'],
-    );
   });
 
   register('circle_theorems', (c) {
@@ -688,24 +756,143 @@ void registerGeometry() {
   });
 
   register('coordinates', (c) {
+    // A whole Class 9 chapter used to be one question: name the quadrant.
+    // Twenty of those on a sheet and a student answers the first, spots that
+    // only the signs matter, and does the other nineteen without reading them.
+    // Reading a point off the plane has more sides than that - which axis it
+    // sits on, how far from the origin, where its mirror image lands, and what
+    // a whole side of a shape has in common.
     final reach = c.band(6, 40);
     final x = c.intExcept(-reach, reach, {0});
     final y = c.intExcept(-reach, reach, {0});
-    final quadrant = x > 0 ? (y > 0 ? 'I' : 'IV') : (y > 0 ? 'II' : 'III');
-    return Question(
-      skillId: c.skillId,
-      prompt: 'In which quadrant does the point ($x, $y) lie?\n\n'
-          'Answer with I, II, III or IV.',
-      answer: quadrant,
-      difficulty: c.difficulty,
-      choices: _withAnswer(['I', 'II', 'III', 'IV'], quadrant, c),
-      steps: [
-        'Quadrant I is (+,+), II is (-,+), III is (-,-), IV is (+,-).',
-        'x is ${x > 0 ? 'positive' : 'negative'} and y is '
-            '${y > 0 ? 'positive' : 'negative'}, so it is quadrant $quadrant.',
-      ],
-      hint: 'Check the sign of each coordinate.',
-    );
+
+    switch (c.variantByLevel(5)) {
+      case 0:
+        final quadrant = x > 0 ? (y > 0 ? 'I' : 'IV') : (y > 0 ? 'II' : 'III');
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In which quadrant does the point ($x, $y) lie?\n\n'
+              'Answer with I, II, III or IV.',
+          answer: quadrant,
+          difficulty: c.difficulty,
+          choices: _withAnswer(['I', 'II', 'III', 'IV'], quadrant, c),
+          steps: [
+            'Quadrant I is (+,+), II is (-,+), III is (-,-), IV is (+,-).',
+            'x is ${x > 0 ? 'positive' : 'negative'} and y is '
+                '${y > 0 ? 'positive' : 'negative'}, so it is quadrant '
+                '$quadrant.',
+          ],
+          hint: 'Check the sign of each coordinate.',
+        );
+      case 1:
+        // A point ON an axis is in no quadrant at all, and that is the case
+        // students get wrong precisely because every other question has an
+        // answer of I to IV.
+        final onX = c.coin();
+        final v = c.intExcept(-reach, reach, {0});
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Where does the point ${onX ? '($v, 0)' : '(0, $v)'} lie?',
+          answer: onX ? 'x-axis' : 'y-axis',
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              const ['x-axis', 'y-axis', 'quadrant I', 'the origin'],
+              onX ? 'x-axis' : 'y-axis',
+              c),
+          steps: [
+            onX
+                ? 'The y coordinate is 0, so the point has not moved up or '
+                    'down at all.'
+                : 'The x coordinate is 0, so the point has not moved left or '
+                    'right at all.',
+            'It sits on the ${onX ? 'x' : 'y'}-axis, which is in no quadrant.',
+          ],
+          hint: 'A zero in one coordinate puts the point on an axis.',
+        );
+      case 2:
+        // Reflection. The rule is one sign flipping, and saying which one is
+        // the whole question.
+        //
+        // Started from the first quadrant on purpose. Reflecting (-4, -2)
+        // answers "4,-2", and those digits sit inside the "(-4, -2)" printed
+        // in the prompt - so a student could lift the answer off the page
+        // without reflecting anything. Starting positive means the answer
+        // always carries a minus sign the prompt does not have.
+        final px = x.abs();
+        final py = y.abs();
+        final inX = c.coin();
+        return Question(
+          skillId: c.skillId,
+          prompt: 'The point ($px, $py) is reflected in the '
+              '${inX ? 'x' : 'y'}-axis.\n\n'
+              'What are its new coordinates? Write them as  a,b',
+          answer: inX ? '$px,${-py}' : '${-px},$py',
+          difficulty: c.difficulty,
+          steps: [
+            inX
+                ? 'Reflecting in the x-axis flips the point above or below it, '
+                    'so only y changes sign.'
+                : 'Reflecting in the y-axis flips the point left or right, so '
+                    'only x changes sign.',
+            'So ($px, $py) becomes '
+                '(${inX ? '$px, ${-py}' : '${-px}, $py'}).',
+          ],
+          hint: 'Reflecting in an axis leaves that axis\'s coordinate alone.',
+        );
+      case 3:
+        // How far from an axis. Distance is never negative, which is the trap.
+        final fromX = c.coin();
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How far is the point ($x, $y) from the '
+              '${fromX ? 'x' : 'y'}-axis?',
+          answer: '${fromX ? y.abs() : x.abs()}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(fromX ? y.abs() : x.abs(),
+              distractors: [x.abs(), y.abs(), fromX ? y : x]),
+          steps: [
+            fromX
+                ? 'Distance from the x-axis is how far up or down you are, '
+                    'which is the y coordinate.'
+                : 'Distance from the y-axis is how far left or right you are, '
+                    'which is the x coordinate.',
+            'A distance is never negative, so it is '
+                '${fromX ? y.abs() : x.abs()}.',
+          ],
+          hint: 'Distance cannot be negative, whatever the sign of the '
+              'coordinate.',
+        );
+      default:
+        // What a whole line of points has in common. This is the step from
+        // reading one point to seeing an equation, and it is what the chapter
+        // is actually building towards.
+        final vertical = c.coin();
+        final k = c.intExcept(-reach, reach, {0});
+        final others = [
+          for (var i = 0; i < 3; i++)
+            vertical ? '($k, ${c.int_(-9, 9)})' : '(${c.int_(-9, 9)}, $k)',
+        ];
+        return Question(
+          skillId: c.skillId,
+          prompt: 'These points all lie on one straight line:\n\n'
+              '${others.join('   ')}\n\n'
+              'What is the equation of that line?',
+          answer: vertical ? 'x=$k' : 'y=$k',
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              ['x=$k', 'y=$k', 'x=${-k}', 'y=${-k}'],
+              vertical ? 'x=$k' : 'y=$k',
+              c),
+          steps: [
+            vertical
+                ? 'Every point has the same x coordinate, $k, while y changes.'
+                : 'Every point has the same y coordinate, $k, while x changes.',
+            'A line where ${vertical ? 'x' : 'y'} never changes is '
+                '${vertical ? 'x' : 'y'} = $k.',
+          ],
+          hint: 'Look for the coordinate that is the same every time.',
+        );
+    }
   });
 
   register('distance_formula', (c) {
@@ -720,20 +907,106 @@ void registerGeometry() {
     final y1 = c.int_(low, 6);
     final x2 = x1 + t[0];
     final y2 = y1 + t[1];
-    return Question(
-      skillId: c.skillId,
-      prompt: 'Find the distance between the points ($x1, $y1) and ($x2, $y2).',
-      answer: '${t[2]}',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(t[2], distractors: [t[0] + t[1], t[2] + 1]),
-      steps: [
-        'Distance = square root of ((x2-x1) squared + (y2-y1) squared).',
-        'Differences: ${t[0]} across and ${t[1]} up.',
-        '${t[0]} x ${t[0]} + ${t[1]} x ${t[1]} = ${t[2] * t[2]}, and the square '
-            'root of ${t[2] * t[2]} is ${t[2]}.',
-      ],
-      hint: 'It is Pythagoras with the two gaps as the legs.',
-    );
+
+    // The skill is called distance-SECTION and the section formula was never
+    // in it. Nor was the midpoint, which is the case of it every student meets
+    // first. A whole Class 9 coordinate chapter was one question, asked twenty
+    // times with different numbers.
+    switch (c.variantByLevel(4)) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the distance between the points ($x1, $y1) and '
+              '($x2, $y2).',
+          answer: '${t[2]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(t[2], distractors: [t[0] + t[1], t[2] + 1]),
+          steps: [
+            'Distance = square root of ((x2-x1) squared + (y2-y1) squared).',
+            'Differences: ${t[0]} across and ${t[1]} up.',
+            '${t[0]} x ${t[0]} + ${t[1]} x ${t[1]} = ${t[2] * t[2]}, and the '
+                'square root of ${t[2] * t[2]} is ${t[2]}.',
+          ],
+          hint: 'It is Pythagoras with the two gaps as the legs.',
+        );
+      case 1:
+        // Midpoint. The two points are placed either side of a whole-number
+        // centre, so the halves come out whole and the student is practising
+        // the formula rather than fractions.
+        final mx = c.int_(low, 8);
+        final my = c.int_(low, 8);
+        final gapX = c.int_(1, 9);
+        final gapY = c.int_(1, 9);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the midpoint of the line joining '
+              '(${mx - gapX}, ${my - gapY}) and (${mx + gapX}, ${my + gapY}).'
+              '\n\nWrite it as  a,b',
+          answer: '$mx,$my',
+          difficulty: c.difficulty,
+          steps: [
+            'The midpoint is the average of the two x values and the average '
+                'of the two y values.',
+            'x: (${mx - gapX} + ${mx + gapX}) / 2 = ${2 * mx} / 2 = $mx.',
+            'y: (${my - gapY} + ${my + gapY}) / 2 = ${2 * my} / 2 = $my.',
+          ],
+          hint: 'Add the two x values and halve, then do the same for y.',
+        );
+      case 2:
+        // Backwards from the midpoint. Same fact, and a student who has only
+        // memorised "add them and halve" comes unstuck here.
+        final ax = c.int_(low, 8);
+        final ay = c.int_(low, 8);
+        final mx = ax + c.int_(1, 7);
+        final my = ay + c.int_(1, 7);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'M($mx, $my) is the midpoint of AB, and A is ($ax, $ay).\n\n'
+              'Find B. Write it as  a,b',
+          answer: '${2 * mx - ax},${2 * my - ay}',
+          difficulty: c.difficulty,
+          steps: [
+            'M is halfway, so whatever takes you from A to M takes you from M '
+                'to B.',
+            'x: $mx + ($mx - $ax) = ${2 * mx - ax}.',
+            'y: $my + ($my - $ay) = ${2 * my - ay}.',
+          ],
+          hint: 'Whatever step takes you from A to M, take it once more.',
+        );
+      default:
+        // The section formula itself. The gap is built as a multiple of m + n
+        // so the division is exact and the answer is a lattice point.
+        // A ratio is written in its simplest form. Drawing m and n freely
+        // produced "divides PQ in the ratio 2 : 2", which is the midpoint
+        // wearing a disguise and is not how anyone writes a ratio.
+        final ratio = c.pick(const [[1, 1], [1, 2], [2, 1], [1, 3], [3, 1],
+          [2, 3], [3, 2]]);
+        final m = ratio[0];
+        final n = ratio[1];
+        final px = c.int_(low, 5);
+        final py = c.int_(low, 5);
+        final qx = px + (m + n) * c.int_(1, 3);
+        final qy = py + (m + n) * c.int_(1, 3);
+        final rx = (m * qx + n * px) ~/ (m + n);
+        final ry = (m * qy + n * py) ~/ (m + n);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'P($px, $py) and Q($qx, $qy) are two points.\n\n'
+              'Find the point that divides PQ in the ratio $m : $n. '
+              'Write it as  a,b',
+          answer: '$rx,$ry',
+          difficulty: c.difficulty,
+          steps: [
+            'Section formula: ((m x2 + n x1) / (m + n), '
+                '(m y2 + n y1) / (m + n)).',
+            'x: ($m x $qx + $n x $px) / ${m + n} = ${m * qx + n * px} / '
+                '${m + n} = $rx.',
+            'y: ($m x $qy + $n x $py) / ${m + n} = ${m * qy + n * py} / '
+                '${m + n} = $ry.',
+          ],
+          hint: 'The far point is multiplied by m, the near point by n.',
+        );
+    }
   });
 }
 

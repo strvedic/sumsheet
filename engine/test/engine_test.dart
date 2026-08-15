@@ -595,6 +595,59 @@ void main() {
           reason: 'the 1 in 21 is part of twenty-one, not a coefficient');
     });
 
+    test('a Class 9 chapter asks about more than one thing', () {
+      // Parents reported it before any test did: the senior sheets were the
+      // same question twenty times with the numbers changed. Coordinates was
+      // the worst - a whole chapter that only ever asked which quadrant a
+      // point is in, so a student answered the first and did the rest on
+      // autopilot without reading them.
+      //
+      // Counted as shapes: the prompt with every number blanked out. Changing
+      // the numbers does not make it a different question, which is the whole
+      // of what the parents were saying.
+      const leastShapes = {
+        'coordinate-basics': 5,
+        'distance-section': 4,
+        'algebra-identities': 4,
+        'circle-basics': 5,
+        'probability-basic': 5,
+      };
+      for (final entry in leastShapes.entries) {
+        final shapes = <String>{};
+        for (var d = 1; d <= 5; d++) {
+          for (final q in generatePractice(
+              skill: map[entry.key], count: 20, difficulty: d, seed: 3)) {
+            shapes.add(q.prompt
+                .replaceAll(RegExp(r'-?\d+'), '#')
+                .replaceAll(RegExp(r'\s+'), ' ')
+                .trim());
+          }
+        }
+        expect(shapes.length, greaterThanOrEqualTo(entry.value),
+            reason: '${entry.key} only asks ${shapes.length} kinds of '
+                'question:\n${shapes.join('\n')}');
+      }
+    });
+
+    test('a ratio is written in its simplest form', () {
+      // "Find the point that divides PQ in the ratio 2 : 2" is the midpoint in
+      // a disguise, and nobody writes a ratio unsimplified.
+      int hcf(int a, int b) => b == 0 ? a : hcf(b, a % b);
+      final ratio = RegExp(r'ratio (\d+) : (\d+)');
+      for (var d = 1; d <= 5; d++) {
+        for (var seed = 0; seed < 60; seed++) {
+          final q = generateQuestion(
+              skill: map['distance-section'], difficulty: d, seed: seed);
+          final m = ratio.firstMatch(q.prompt);
+          if (m == null) continue;
+          final a = int.parse(m.group(1)!);
+          final b = int.parse(m.group(2)!);
+          expect(hcf(a, b), 1,
+              reason: '${q.prompt} uses a ratio that is not in lowest terms');
+        }
+      }
+    });
+
     test('same seed reproduces the identical question', () {
       for (final skill in map.all.where(hasGenerator).take(20)) {
         final a = generateQuestion(skill: skill, difficulty: 3, seed: 12345);

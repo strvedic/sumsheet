@@ -1,4 +1,5 @@
 import '../fraction.dart';
+import '../gen_context.dart';
 import '../generator.dart';
 import '../question.dart';
 
@@ -556,19 +557,98 @@ void _registerLaterAlgebra() {
     // number, so the student is tested on the identity rather than on typing
     // a whole polynomial exactly the way the app expects.
     final middle = (minus ? -1 : 1) * 2 * a * b;
-    return Question(
-      skillId: c.skillId,
-      prompt: 'Expand (${term(a, 'x')} ${minus ? '-' : '+'} $b)^2.\n\n'
-          'What is the coefficient of x?',
-      answer: '$middle',
-      difficulty: c.difficulty,
-      steps: [
-        '(p ${minus ? '-' : '+'} q)^2 = p^2 ${minus ? '-' : '+'} 2pq + q^2.',
-        'Here p = ${term(a, 'x')} and q = $b.',
-        '2pq = 2 x $a x $b = ${2 * a * b}, so the x term is ${term(middle, 'x')}.',
-      ],
-      hint: 'The middle term is always 2 times the two parts multiplied.',
-    );
+
+    // There are three identities in the chapter and this asked about one of
+    // them, one way. A student who has learnt "double the two parts" scores
+    // twenty out of twenty without ever meeting a^2 - b^2, without expanding
+    // (x+p)(x+q), and without once using an identity on actual numbers -
+    // which is what the identities are for.
+    switch (c.variantByLevel(4)) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Expand (${term(a, 'x')} ${minus ? '-' : '+'} $b)^2.\n\n'
+              'What is the coefficient of x?',
+          answer: '$middle',
+          difficulty: c.difficulty,
+          steps: [
+            '(p ${minus ? '-' : '+'} q)^2 = p^2 ${minus ? '-' : '+'} 2pq + q^2.',
+            'Here p = ${term(a, 'x')} and q = $b.',
+            '2pq = 2 x $a x $b = ${2 * a * b}, so the x term is '
+                '${term(middle, 'x')}.',
+          ],
+          hint: 'The middle term is always 2 times the two parts multiplied.',
+        );
+      case 1:
+        // Difference of two squares - the identity with no middle term at all,
+        // which is exactly why students expect one and put it in.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Expand (${term(a, 'x')} + $b)(${term(a, 'x')} - $b).\n\n'
+              'What is the coefficient of x?',
+          answer: '0',
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              ['0', '${2 * a * b}', '${-2 * a * b}', '${a * b}'], '0', c),
+          steps: [
+            '(p + q)(p - q) = p^2 - q^2. There is no middle term.',
+            'The ${term(a * b, 'x')} and the -${term(a * b, 'x')} cancel out.',
+            'So the coefficient of x is 0.',
+          ],
+          hint: 'Write out all four products and see which two cancel.',
+        );
+      case 2:
+        // (x + p)(x + q). The middle coefficient is the SUM, not the product,
+        // and mixing those two up is the classic error.
+        final p = c.int_(1, c.band(6, 12));
+        // Two different numbers. With p equal to q this prints
+        // "(x + 7)(x + 7)", which anyone would write as (x + 7)^2 - and that
+        // is the variant above, asked again in worse notation.
+        final q = c.intExcept(1, c.band(6, 12) + 1, {p});
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Expand (x + $p)(x + $q).\n\n'
+              'What is the coefficient of x?',
+          answer: '${p + q}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(p + q, distractors: [p * q, p, q]),
+          steps: [
+            '(x + p)(x + q) = x^2 + (p + q)x + pq.',
+            'The x term uses the SUM: $p + $q = ${p + q}.',
+            'The number on its own uses the product, $p x $q = ${p * q}.',
+          ],
+          hint: 'Add for the x term, multiply for the last term.',
+        );
+      default:
+        // The identity used on numbers, which is the reason it is taught. A
+        // student who can do 103^2 in their head has understood it; one who
+        // only expands brackets has not.
+        // Big enough that the identity is worth reaching for. With 10 and 20
+        // in this list it printed "use an identity to work out 7 x 7", which
+        // makes the method look like a waste of time - the opposite of the
+        // point. 98^2 and 103^2 are why anyone learns it.
+        final base = c.pickByLevel(const [50, 40, 30, 60, 70, 80, 90, 100]);
+        final off = c.int_(1, 4);
+        final up = c.coin();
+        final n = up ? base + off : base - off;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Use an identity to work out  $n x $n  without a '
+              'calculator.',
+          answer: '${n * n}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n * n,
+              distractors: [base * base, base * base + off * off, n * base]),
+          steps: [
+            'Write $n as ($base ${up ? '+' : '-'} $off).',
+            '($base ${up ? '+' : '-'} $off)^2 = $base^2 ${up ? '+' : '-'} '
+                '2 x $base x $off + $off^2.',
+            '${base * base} ${up ? '+' : '-'} ${2 * base * off} + '
+                '${off * off} = ${n * n}.',
+          ],
+          hint: 'Split $n into a round number and a small one.',
+        );
+    }
   });
 
   register('simultaneous', (c) {
@@ -608,4 +688,10 @@ void _registerLaterAlgebra() {
 String _signed(int v, {bool first = false}) {
   if (first) return v < 0 ? '($v)' : '$v';
   return v < 0 ? '- ${v.abs()}' : '+ $v';
+}
+
+/// Builds a shuffled four-option list that always contains [answer].
+List<String> _withAnswer(List<String> pool, String answer, GenContext c) {
+  final others = pool.where((e) => e != answer).toList()..shuffle(c.rng);
+  return [answer, ...others.take(3)]..shuffle(c.rng);
 }

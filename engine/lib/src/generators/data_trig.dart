@@ -146,7 +146,12 @@ void registerDataAndTrig() {
   });
 
   register('probability', (c) {
-    final kind = c.pick(['die', 'coin', 'ball']);
+    // Coin, die and bag - three questions for a whole Class 9 chapter, and the
+    // bag one asked only for the thing you want. Ordered easiest first: the
+    // complement, certainty and a pack of cards are the rest of the chapter,
+    // and the last two are where the answer stops being a plain fraction.
+    final kind = c.pickByLevel(
+        const ['coin', 'die', 'ball', 'not', 'certain', 'cards']);
     if (kind == 'coin') {
       return Question(
         skillId: c.skillId,
@@ -190,18 +195,88 @@ void registerDataAndTrig() {
     final red = c.int_(2, c.band(5, 9));
     final blue = c.int_(2, c.band(5, 9));
     final f = Fraction(red, red + blue);
+    if (kind == 'ball') {
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A bag holds $red red balls and $blue blue balls. One is taken '
+            'without looking.\n\nWhat is the probability it is red? '
+            '(fraction in lowest terms)',
+        answer: f.toString(),
+        difficulty: c.difficulty,
+        steps: [
+          'Total balls = $red + $blue = ${red + blue}.',
+          'Red ones = $red, so P = $red/${red + blue} = ${f.toString()}.',
+        ],
+        hint: 'Wanted outcomes over total outcomes.',
+      );
+    }
+    if (kind == 'not') {
+      // The complement. Counting what you do NOT want is the idea the chapter
+      // is really teaching, and it never appeared on the sheet.
+      final other = Fraction(blue, red + blue);
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A bag holds $red red balls and $blue blue balls. One is taken '
+            'without looking.\n\nWhat is the probability it is NOT red? '
+            '(fraction in lowest terms)',
+        answer: other.toString(),
+        difficulty: c.difficulty,
+        steps: [
+          'P(red) = $red/${red + blue}.',
+          'Everything that is not red is the rest: 1 - $red/${red + blue}.',
+          'That is $blue/${red + blue} = ${other.toString()}.',
+        ],
+        hint: 'The two probabilities have to add up to 1.',
+      );
+    }
+    if (kind == 'certain') {
+      // Certain and impossible. The answers are 1 and 0, which students who
+      // have only ever written fractions do not expect.
+      final impossible = c.coin();
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A bag holds $red red balls and $blue blue balls. One is taken '
+            'without looking.\n\n'
+            '${impossible ? 'What is the probability it is green?' : 'What is '
+                'the probability it is red or blue?'}',
+        answer: impossible ? '0' : '1',
+        difficulty: c.difficulty,
+        choices: _withAnswer(const ['0', '1', '1/2', '1/4'],
+            impossible ? '0' : '1', c),
+        steps: [
+          impossible
+              ? 'There are no green balls in the bag at all.'
+              : 'Every ball in the bag is either red or blue.',
+          impossible
+              ? 'Something that cannot happen has probability 0.'
+              : 'Something certain to happen has probability 1.',
+        ],
+        hint: impossible
+            ? 'How many green balls are there?'
+            : 'Is there any ball that is neither red nor blue?',
+      );
+    }
+    // A pack of cards, which every Class 9 probability exercise uses and this
+    // one never did.
+    const suits = 13;
+    final want = c.pickByLevel(const [
+      ('a red card', 26), ('a heart', 13), ('a king', 4),
+      ('a face card', 12), ('the ace of spades', 1),
+    ]);
+    final card = Fraction(want.$2, 52);
     return Question(
       skillId: c.skillId,
-      prompt: 'A bag holds $red red balls and $blue blue balls. One is taken '
-          'without looking.\n\nWhat is the probability it is red? '
+      prompt: 'One card is drawn from a well shuffled pack of 52.\n\n'
+          'What is the probability it is ${want.$1}? '
           '(fraction in lowest terms)',
-      answer: f.toString(),
+      answer: card.toString(),
       difficulty: c.difficulty,
       steps: [
-        'Total balls = $red + $blue = ${red + blue}.',
-        'Red ones = $red, so P = $red/${red + blue} = ${f.toString()}.',
+        'A pack has 52 cards: 4 suits of $suits.',
+        'There ${want.$2 == 1 ? 'is' : 'are'} ${want.$2} of those.',
+        '${want.$2}/52 = ${card.toString()}.',
       ],
-      hint: 'Wanted outcomes over total outcomes.',
+      hint: 'Count how many of the 52 cards fit, then simplify.',
     );
   });
 

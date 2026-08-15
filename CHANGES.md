@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 41.
+Baseline when copied: 24 tests passing. Now: 43.
 
 ---
 
@@ -557,7 +557,65 @@ prompt, answer, steps, hint and choices across every skill at every level, and
 `a coefficient of 1 typed in is still marked correct`, which pins both
 directions of the matching including the `21x` case.
 
-## 18. Removed, not ported
+## 18. Class 9: one question per chapter, twenty times
+
+`generators/geometry.dart`, `ratio_algebra.dart`, `data_trig.dart`
+
+Reported by parents, not found by a test: the senior sheets were the same
+question over and over with only the numbers changed, and students switched
+off. Measuring it agreed - **21 of 47 Class 9-12 chapters had 2 or fewer
+question shapes, and 11 had exactly one.**
+
+A shape is the prompt with its numbers blanked out. That distinction is the
+whole point: changing the numbers does not make it a different question.
+
+This is a different fault from the junior classes, where twenty near-identical
+sums is correct - that is drill, and it prints as a grid of column sums. A
+Class 9 concept has several faces, and asking one face teaches a shortcut
+rather than the concept.
+
+Class 9 first, by request. Four of its eight chapters were thin:
+
+| Skill | Shapes before | After | What was missing |
+|---|---|---|---|
+| `coordinate-basics` | 1 | 6 | on an axis, reflection, distance from an axis, the line through them |
+| `distance-section` | 1 | 4 | midpoint, working back from a midpoint, and the **section formula the skill is named after** |
+| `algebra-identities` | 1 | 4 | a^2-b^2, (x+p)(x+q), using an identity on actual numbers |
+| `circle-basics` | 2 | 5 | naming the parts, longest chord, perpendicular from the centre |
+| `probability-basic` | 3 | 6 | the complement, certain/impossible, a pack of cards |
+
+Chapter totals: ch1 **2 -> 11**, ch4 5 -> 9, ch5 5 -> 13, ch7 4 -> 8.
+
+**Four bad questions caught by reading the output rather than trusting it:**
+
+- `divides PQ in the ratio 2 : 2` - the midpoint in a disguise, and nobody
+  writes a ratio unsimplified. Ratios now come from a coprime list.
+- `Use an identity to work out 7 x 7` - which makes the method look like a
+  waste of time, the exact opposite of why it is taught. Bases now start at 30,
+  so it is 87^2 and 98^2.
+- `Expand (x + 7)(x + 7)` - anyone would write that as a square, and the square
+  is the variant above it. The two numbers now differ.
+- Reflecting `(-4, -2)` answers `4,-2`, and those digits sit inside the prompt
+  - so the answer could be copied without reflecting anything. Caught by the
+  existing `a question never prints its own answer` test. Reflections now start
+  in the first quadrant, so the answer always carries a minus the prompt lacks.
+
+**Verified independently:** 2262 coordinate and circle answers re-derived
+straight from the printed prompt - distance by Pythagoras, midpoint by
+averaging, the section formula recomputed, and every chord checked against
+half-chord^2 + distance^2 = radius^2. Zero disagreed.
+
+**Tests added:** `a Class 9 chapter asks about more than one thing` and `a
+ratio is written in its simplest form`.
+
+**Still to do:** Class 10, 12 and 11, on the same pattern. The worst remaining
+is `heights-distances` (Class 10), where every question is a pole at 45
+degrees - so a student learns "the answer is the distance" and never meets
+tan 30 or tan 60. Then `determinants`, `matrices`, `vectors`,
+`three-d-geometry`, `binomial-theorem`, `straight-line` and `lpp`, each of
+which has exactly one question shape today.
+
+## 19. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
