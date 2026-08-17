@@ -595,7 +595,7 @@ void main() {
           reason: 'the 1 in 21 is part of twenty-one, not a coefficient');
     });
 
-    test('a Class 9 chapter asks about more than one thing', () {
+    test('a senior chapter asks about more than one thing', () {
       // Parents reported it before any test did: the senior sheets were the
       // same question twenty times with the numbers changed. Coordinates was
       // the worst - a whole chapter that only ever asked which quadrant a
@@ -606,11 +606,20 @@ void main() {
       // the numbers does not make it a different question, which is the whole
       // of what the parents were saying.
       const leastShapes = {
+        // Class 9
         'coordinate-basics': 5,
         'distance-section': 4,
         'algebra-identities': 4,
         'circle-basics': 5,
         'probability-basic': 5,
+        // Class 10. heights-distances was the worst in the whole app: every
+        // question a pole at 45 degrees, where tan 45 is 1, so the answer was
+        // always the number in the question. A student scored full marks by
+        // copying it and never met tan 30 or tan 60.
+        'heights-distances': 4,
+        'arithmetic-progression': 5,
+        'circle-area': 4,
+        'triangle-similarity': 4,
       };
       for (final entry in leastShapes.entries) {
         final shapes = <String>{};

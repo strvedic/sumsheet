@@ -380,6 +380,77 @@ void registerSenior() {
     final diff = c.int_(2, c.band(5, 12));
     final n = c.int_(5, c.band(10, 25));
     final nth = first + (n - 1) * diff;
+
+    // The nth term and the sum were the whole chapter. Everything the board
+    // actually asks - name the common difference, work backwards from a term
+    // to find which one it is, decide whether a number is even in the
+    // sequence - was missing, and a student could pass this sheet by
+    // memorising one formula.
+    switch (c.variantByLevel(5)) {
+      case 0:
+        // Reading d off the sequence. It is the first thing you do in every
+        // other AP question and it was never asked on its own.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'An AP starts $first, ${first + diff}, ${first + 2 * diff}, '
+              '${first + 3 * diff}, ...\n\n'
+              'What is the common difference?',
+          answer: '$diff',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(diff, distractors: [first, diff + 1, nth]),
+          steps: [
+            'The common difference is any term take away the one before it.',
+            '${first + diff} - $first = $diff.',
+          ],
+          hint: 'Subtract the first term from the second.',
+        );
+      case 1:
+        // Which term is it? The nth-term formula run backwards, and where
+        // students who have only memorised a + (n-1)d come unstuck.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In the AP $first, ${first + diff}, ${first + 2 * diff}, ..., '
+              'one of the terms is $nth.\n\n'
+              'Which term is it? Give the position.',
+          answer: '$n',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n, distractors: [n - 1, n + 1, diff]),
+          steps: [
+            'a = $first, d = $diff, and the term is $nth.',
+            '$first + (n - 1) x $diff = $nth, so (n - 1) x $diff = '
+                '${nth - first}.',
+            'n - 1 = ${n - 1}, so n = $n.',
+          ],
+          hint: 'Put the term into a + (n-1)d and solve for n.',
+        );
+      case 2:
+        // Is a given number in the sequence at all? The answer is yes or no,
+        // which nothing else on the sheet ever is.
+        final inSequence = c.coin();
+        final probe = inSequence ? nth : nth + 1;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'An AP starts $first, ${first + diff}, ${first + 2 * diff}, '
+              '...\n\nIs $probe a term of this AP? Answer yes or no.',
+          answer: inSequence ? 'yes' : 'no',
+          difficulty: c.difficulty,
+          choices: const ['yes', 'no'],
+          steps: [
+            'Every term is $first plus a whole number of $diff s.',
+            '$probe - $first = ${probe - first}.',
+            inSequence
+                ? '${probe - first} divides exactly by $diff, so yes - it is '
+                    'term $n.'
+                : '${probe - first} does not divide exactly by $diff, so it '
+                    'is not a term.',
+          ],
+          hint: 'Take the first term away, then see if $diff divides what is '
+              'left.',
+        );
+      default:
+        break;
+    }
+
     if (c.difficulty >= 4 && c.coin()) {
       final sum = n * (2 * first + (n - 1) * diff) ~/ 2;
       return Question(

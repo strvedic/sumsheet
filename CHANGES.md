@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 43.
+Baseline when copied: 24 tests passing. Now: 43 (Class 10 folded into the senior-variety test).
 
 ---
 
@@ -615,7 +615,53 @@ tan 30 or tan 60. Then `determinants`, `matrices`, `vectors`,
 `three-d-geometry`, `binomial-theorem`, `straight-line` and `lpp`, each of
 which has exactly one question shape today.
 
-## 19. Removed, not ported
+## 19. Class 10, same treatment
+
+`generators/data_trig.dart`, `senior.dart`, `mensuration.dart`, `geometry.dart`
+
+Class 10 went from **6 thin chapters to 2**.
+
+`heights-distances` was the worst generator in the app. Every question was a
+pole at 45 degrees - and tan 45 is 1, so the answer was always the number
+printed in the question. A student scored twenty out of twenty by copying it
+across, never used a trig ratio, never met tan 30 or tan 60, and never saw an
+angle of depression. It taught the shortcut instead of the chapter. Now four
+shapes, with 30 and 60 kept exact by answering in the "k root 3" form the board
+expects rather than making anyone fight 1.732.
+
+| Skill | Before | After | Added |
+|---|---|---|---|
+| `heights-distances` | 1 | 4 | 60 degrees, 30 degrees the other way round, angle of depression |
+| `arithmetic-progression` | 2 | 5 | name the common difference, which term is this, is this a term at all |
+| `circle-area` | 2 | 4 | radius back from an area, and the area of a **sector** - in a chapter called Areas Related to Circles |
+| `triangle-similarity` | 1 | 4 | areas scale by the square of the ratio, sides back from an area ratio, the shadow problem |
+
+**Two bugs caught before they shipped:**
+
+- The sector area truncated. It is `area x angle / 360`, and with pi as 22/7
+  that is not whole for every pair - 154 x 90 / 360 is 38.5, and integer
+  division would have printed **38** as the answer with nothing anywhere
+  reporting it. Angles are now filtered to the ones that divide exactly for
+  that circle.
+- `triangle-similarity` offered the same multiple-choice option twice: at k = 2
+  the "2k" distractor equals the k-squared answer. Caught by the existing
+  duplicate-choices check.
+
+Also `Write it as ${k}root3` was the answer itself, the third time that fault
+has appeared. `formatExample` moved from `mensuration.dart` into
+`question.dart` so every generator can reach it.
+
+**Verified independently:** 5000 Class 10 answers re-derived from the printed
+prompt - circle areas and circumferences recomputed from the radius, radii
+recovered from areas, every sector checked for exactness, and every AP question
+checked against a + (n-1)d.
+
+**Still to do:** Class 11 (8 thin chapters) and Class 12 (11). The one-shape
+generators left are `binomial-theorem`, `straight-line`, `three-d-geometry`,
+`matrices`, `determinants`, `vectors`, `definite-integrals`,
+`differential-equations` and `linear-programming`.
+
+## 20. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

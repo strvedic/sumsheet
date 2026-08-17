@@ -431,22 +431,93 @@ void registerGeometry() {
     final k = c.int_(2, c.band(3, 5));
     final small = c.int_(3, c.band(8, 15));
     final other = c.int_(3, c.band(8, 15));
-    return Question(
-      skillId: c.skillId,
-      prompt: 'Two triangles are similar. A side of $small cm in the smaller '
-          'triangle matches ${small * k} cm in the larger one.\n\n'
-          'If another side of the smaller triangle is $other cm, what is the '
-          'matching side of the larger triangle?',
-      answer: '${other * k}',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(other * k, distractors: [other + k, other * (k + 1)]),
-      steps: [
-        'Scale factor = ${small * k} / $small = $k.',
-        'Every side scales by the same factor.',
-        '$other x $k = ${other * k}.',
-      ],
-      hint: 'Find how many times bigger the second triangle is.',
-    );
+
+    // Scaling one side was the only question. The theorem the Class 10 chapter
+    // is built on - areas scale by the square of the ratio - never appeared,
+    // and nor did the shadow problem that is the reason anyone uses similar
+    // triangles outside a textbook.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // Areas go up by the SQUARE of the ratio. Students say k, and this is
+        // the single most examined misconception in the chapter.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Two triangles are similar and their sides are in the ratio '
+              '1 : $k.\n\nWhat is the ratio of their areas? '
+              'Write it as  1:n',
+          answer: '1:${k * k}',
+          difficulty: c.difficulty,
+          // Distractors that stay distinct for every k. "2k" cannot be used:
+          // at k = 2 it equals k squared, and the same option appeared twice.
+          choices: _withAnswer(
+              ['1:${k * k}', '1:$k', '1:${k * k * k}', '1:${k * k + 1}'],
+              '1:${k * k}', c),
+          steps: [
+            'Areas of similar figures scale by the SQUARE of the side ratio.',
+            'The sides are 1 : $k, so the areas are 1 : $k x $k.',
+            'That is 1 : ${k * k}.',
+          ],
+          hint: 'Doubling every side does not double the area.',
+        );
+      case 2:
+        // The shadow problem. Same arithmetic, wrapped in the situation the
+        // method actually gets used for.
+        final poleH = c.int_(2, c.band(4, 9));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A $poleH m pole casts a shadow $small m long. At the same '
+              'time a tower casts a shadow ${small * k} m long.\n\n'
+              'How tall is the tower, in metres?',
+          answer: '${poleH * k}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(poleH * k,
+              distractors: [poleH + k, small * k, poleH * small]),
+          steps: [
+            'The sun is at the same angle, so the two triangles are similar.',
+            'The shadow got ${small * k} / $small = $k times longer.',
+            'So the height does too: $poleH x $k = ${poleH * k} m.',
+          ],
+          hint: 'The pole and the tower make similar triangles with their '
+              'shadows.',
+        );
+      case 3:
+        // Given the scale factor from areas, work back to the sides.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Two similar triangles have areas in the ratio '
+              '1 : ${k * k}.\n\nWhat is the ratio of their sides? '
+              'Write it as  1:n',
+          answer: '1:$k',
+          difficulty: c.difficulty,
+          choices: _withAnswer(
+              ['1:$k', '1:${k * k}', '1:${k + 1}', '1:${k * k + 1}'],
+              '1:$k', c),
+          steps: [
+            'Areas scale by the square of the side ratio.',
+            'So the side ratio is the square root of 1 : ${k * k}.',
+            'The square root of ${k * k} is $k, giving 1 : $k.',
+          ],
+          hint: 'Undo the squaring - take the square root.',
+        );
+      default:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Two triangles are similar. A side of $small cm in the '
+              'smaller triangle matches ${small * k} cm in the larger one.\n\n'
+              'If another side of the smaller triangle is $other cm, what is '
+              'the matching side of the larger triangle?',
+          answer: '${other * k}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(other * k,
+              distractors: [other + k, other * (k + 1)]),
+          steps: [
+            'Scale factor = ${small * k} / $small = $k.',
+            'Every side scales by the same factor.',
+            '$other x $k = ${other * k}.',
+          ],
+          hint: 'Find how many times bigger the second triangle is.',
+        );
+    }
   });
 
   register('pythagoras', (c) {

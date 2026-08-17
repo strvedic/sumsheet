@@ -67,6 +67,15 @@ String term(Object coefficient, String variable, {int power = 1}) {
   };
 }
 
+/// A "write it like this" example that is never the answer it illustrates.
+///
+/// "(like 2h 30m)" printed on a question whose answer *is* 2h 30m hands the
+/// answer over in the prompt - the same fault the remainder questions had when
+/// they showed "write your answer like 9 R 2" above a sum whose answer was
+/// 9 R 2. A format example has to be readable and wrong.
+String formatExample(String answer, List<String> options) =>
+    options.firstWhere((o) => o != answer, orElse: () => options.last);
+
 class Question {
   Question({
     required this.skillId,

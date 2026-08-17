@@ -342,23 +342,93 @@ void registerDataAndTrig() {
   });
 
   register('heights_distances', (c) {
-    // Only 45 degrees, where tan = 1, so the arithmetic stays exact.
-    final d = c.int_(c.band(10, 30), c.band(40, 120));
-    return Question(
-      skillId: c.skillId,
-      prompt: 'A pole stands upright. From a point $d m away on level ground, '
-          'the angle of elevation to the top is 45 degrees.\n\n'
-          'How tall is the pole, in metres?',
-      answer: '$d',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(d, distractors: [d * 2, d ~/ 2, d + 10]),
-      steps: [
-        'tan(angle) = height / distance.',
-        'tan 45 = 1, so height / $d = 1.',
-        'Height = $d m.',
-      ],
-      hint: 'What is tan 45?',
-    );
+    // Every question used to be a pole at 45 degrees. tan 45 is 1, so the
+    // answer was always the distance you were given - and a student who spots
+    // that scores twenty out of twenty without ever using a trig ratio, never
+    // meets 30 or 60, and never sees an angle of depression. It taught the
+    // shortcut instead of the chapter.
+    //
+    // 30 and 60 are kept exact by choosing the distance as a multiple of 3 and
+    // reporting the height as "k root 3", the form the board expects. Nobody
+    // should be fighting 1.732 while learning what tan means.
+    final tall = c.pick(const ['pole', 'tower', 'tree', 'building']);
+
+    switch (c.variantByLevel(4)) {
+      case 0:
+        final d = c.int_(c.band(10, 30), c.band(40, 120));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A $tall stands upright. From a point $d m away on level '
+              'ground, the angle of elevation to the top is 45 degrees.\n\n'
+              'How tall is the $tall, in metres?',
+          answer: '$d',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(d, distractors: [d * 2, d ~/ 2, d + 10]),
+          steps: [
+            'tan(angle) = height / distance.',
+            'tan 45 = 1, so height / $d = 1.',
+            'Height = $d m.',
+          ],
+          hint: 'What is tan 45?',
+        );
+      case 1:
+        // 60 degrees: height = distance x root 3.
+        final k = c.int_(c.band(4, 10), c.band(12, 40));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'From a point $k m from the foot of a $tall, the angle of '
+              'elevation of the top is 60 degrees.\n\n'
+              'How tall is the $tall? Write it as  '
+              '${formatExample('${k}root3', const ['4root3', '9root3'])}',
+          answer: '${k}root3',
+          difficulty: c.difficulty,
+          steps: [
+            'tan 60 = height / distance, and tan 60 = root3.',
+            'height = $k x root3.',
+            'So the $tall is ${k}root3 metres tall.',
+          ],
+          hint: 'tan 60 is root 3, not 1.',
+        );
+      case 2:
+        // 30 degrees the other way round: given the height, find how far away
+        // the observer is. Distance = height x root 3.
+        final h = c.int_(c.band(4, 10), c.band(12, 40));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A $tall is $h m tall. From a point on the ground the angle '
+              'of elevation of its top is 30 degrees.\n\n'
+              'How far is that point from the foot of the $tall? Write it as  '
+              '${formatExample('${h}root3', const ['4root3', '9root3'])}',
+          answer: '${h}root3',
+          difficulty: c.difficulty,
+          steps: [
+            'tan 30 = height / distance, and tan 30 = 1 / root3.',
+            'So 1 / root3 = $h / distance, which gives distance = $h x root3.',
+            'The point is ${h}root3 metres away.',
+          ],
+          hint: 'The height is opposite the angle, the distance is next to it.',
+        );
+      default:
+        // Angle of depression, looking down from the top. Same triangle, and
+        // the one students draw upside down.
+        final d = c.int_(c.band(10, 30), c.band(40, 120));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'From the top of a $tall $d m high, the angle of depression '
+              'of a car on the ground is 45 degrees.\n\n'
+              'How far is the car from the foot of the $tall, in metres?',
+          answer: '$d',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(d, distractors: [d * 2, d ~/ 2, d + 10]),
+          steps: [
+            'The angle of depression from the top equals the angle of '
+                'elevation from the car - they are alternate angles.',
+            'tan 45 = height / distance = 1.',
+            'So the distance equals the height: $d m.',
+          ],
+          hint: 'Looking down at 45 is the same triangle as looking up at 45.',
+        );
+    }
   });
 }
 

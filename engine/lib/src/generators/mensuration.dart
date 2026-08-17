@@ -251,9 +251,62 @@ void registerMensuration() {
     // is the whole point of that approximation. Any multiple works, so there is
     // no reason to pick from a list of five.
     final r = 7 * c.int_(1, c.band(6, 20));
-    final wantArea = c.coin();
     final circ = 2 * 22 * r ~/ 7;
     final area = 22 * r * r ~/ 7;
+
+    // Area and circumference forwards were the only two questions in a Class
+    // 10 chapter that is mostly about sectors. Going backwards from an area to
+    // a radius, and finding the area of a slice, are what the board asks.
+    switch (c.variantByLevel(4)) {
+      case 2:
+        // Backwards: given the area, find the radius. Same formula, and it is
+        // where a student has to divide by pi rather than multiply.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A circle has an area of $area square cm. (Take pi = 22/7)\n\n'
+              'What is its radius, in cm?',
+          answer: '$r',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(r, distractors: [r * 2, area ~/ 2, r + 7]),
+          steps: [
+            'Area = pi x r x r, so r x r = area / pi.',
+            '$area x 7 / 22 = ${r * r}.',
+            'The square root of ${r * r} is $r cm.',
+          ],
+          hint: 'Divide by pi first, then take the square root.',
+        );
+      case 3:
+        // A sector. The whole chapter is called Areas Related to Circles and
+        // not one question was about a slice of one.
+        // Only angles that divide this circle's area exactly. A sector is
+        // area x p / 360, and with pi as 22/7 that is not a whole number for
+        // every pair - 154 x 90 / 360 is 38.5, and integer division would
+        // have printed 38 as the answer with nothing to show it was wrong.
+        const angles = [180, 90, 60, 120, 45, 30];
+        final exact =
+            angles.where((p) => (area * p) % 360 == 0).toList();
+        final part = exact.isEmpty ? 180 : c.pickByLevel(exact);
+        final sector = area * part ~/ 360;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A sector of a circle of radius $r cm has an angle of '
+              '$part degrees at the centre. (Take pi = 22/7)\n\n'
+              'Find its area, in square cm.',
+          answer: '$sector',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(sector, distractors: [area, area - sector, part]),
+          steps: [
+            'The whole circle has area pi x $r x $r = $area square cm.',
+            'A sector of $part degrees is $part/360 of the whole circle.',
+            '$area x $part / 360 = $sector square cm.',
+          ],
+          hint: 'Find the whole circle first, then take that fraction of it.',
+        );
+      default:
+        break;
+    }
+
+    final wantArea = c.coin();
     return Question(
       skillId: c.skillId,
       prompt: wantArea
@@ -342,12 +395,3 @@ void registerMensuration() {
     );
   });
 }
-
-/// A "write it like this" example that is never the answer it illustrates.
-///
-/// "(like 2h 30m)" printed on a question whose answer *is* 2h 30m hands the
-/// answer over in the prompt - the same fault the remainder questions had when
-/// they showed "write your answer like 9 R 2" above a sum whose answer was
-/// 9 R 2. A format example has to be readable and wrong.
-String formatExample(String answer, List<String> options) =>
-    options.firstWhere((o) => o != answer, orElse: () => options.last);
