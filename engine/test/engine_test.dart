@@ -628,6 +628,15 @@ void main() {
         'permutation-combination': 4,
         'grouped-data': 3,
         'limits': 3,
+        // Class 12
+        'matrices': 4,
+        'determinants': 4,
+        'vectors': 4,
+        'linear-programming': 3,
+        'differential-equations': 3,
+        'definite-integrals': 4,
+        'derivative-applications': 4,
+        'probability-events': 4,
       };
       for (final entry in leastShapes.entries) {
         final shapes = <String>{};

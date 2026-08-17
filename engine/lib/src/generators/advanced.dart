@@ -373,6 +373,94 @@ void registerAdvanced() {
     final a11 = c.int_(lo, hi), a12 = c.int_(lo, hi);
     final b11 = c.int_(lo, hi), b21 = c.int_(lo, hi);
     final result = a11 * b11 + a12 * b21;
+
+    // One row times one column, every time. A Class 12 matrices chapter is
+    // addition, scalar multiples, transposes and the order of a product -
+    // and whether a product exists at all, which is the first thing the
+    // chapter teaches and the thing students get wrong in the exam.
+    switch (c.variantByLevel(5)) {
+      case 1:
+        // Addition. Element by element, and only when the orders match.
+        final b12 = c.int_(lo, hi), b22 = c.int_(lo, hi);
+        final wantRow = c.coin();
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A = [ $a11  $a12 ]        B = [ $b11  $b12 ]\n\n'
+              'In A + B, what is the ${wantRow ? 'first' : 'second'} entry?',
+          answer: '${wantRow ? a11 + b11 : a12 + b12}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(wantRow ? a11 + b11 : a12 + b12,
+              distractors: [a11 + b12, a11 * b11, a12 + b22]),
+          steps: [
+            'Matrices are added entry by matching entry.',
+            '${wantRow ? a11 : a12} + ${wantRow ? b11 : b12} = '
+                '${wantRow ? a11 + b11 : a12 + b12}.',
+          ],
+          hint: 'Add the entries that sit in the same position.',
+        );
+      case 2:
+        // A scalar multiple. Every entry, not just the first - which is the
+        // slip.
+        final k = c.int_(2, c.band(4, 9));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A = [ $a11  $a12 ]\n\n'
+              'In ${k}A, what is the second entry?',
+          answer: '${k * a12}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(k * a12,
+              distractors: [a12, k * a11, k + a12]),
+          steps: [
+            'A scalar multiplies EVERY entry, not just the first.',
+            '$k x $a12 = ${k * a12}.',
+          ],
+          hint: 'Multiply each entry by $k.',
+        );
+      case 3:
+        // Does the product even exist, and what order is it? This is the
+        // question the chapter opens with and the sheet never asked.
+        final p = c.int_(2, 4), q = c.int_(2, 4), r = c.int_(2, 4);
+        final matches = c.coin();
+        final bRows = matches ? q : c.intExcept(2, 4, {q});
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A is a $p x $q matrix and B is a $bRows x $r matrix.\n\n'
+              'Does the product AB exist? Answer yes or no.',
+          answer: bRows == q ? 'yes' : 'no',
+          difficulty: c.difficulty,
+          choices: const ['yes', 'no'],
+          steps: [
+            'AB exists only when the columns of A match the rows of B.',
+            'A has $q columns and B has $bRows rows.',
+            bRows == q
+                ? 'They match, so AB exists and is $p x $r.'
+                : 'They do not match, so AB does not exist.',
+          ],
+          hint: 'Compare the columns of the first with the rows of the second.',
+        );
+      case 4:
+        // The transpose. Rows become columns, and the entry that moves is the
+        // one worth asking about.
+        final b12 = c.int_(lo, hi), b22 = c.int_(lo, hi);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A = [ $a11  $a12 ]\n'
+              '    [ $b12  $b22 ]\n\n'
+              'In the transpose of A, what is the entry in row 1, column 2?',
+          answer: '$b12',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(b12, distractors: [a12, a11, b22]),
+          steps: [
+            'Transposing swaps rows and columns.',
+            'The entry in row 2, column 1 of A moves to row 1, column 2.',
+            'That entry is $b12.',
+          ],
+          hint: 'Read A down its first column instead of across its first row.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Multiply these matrices:\n\n'
@@ -398,6 +486,84 @@ void registerAdvanced() {
     final a = c.int_(lo, hi), b = c.int_(lo, hi);
     final cc = c.int_(lo, hi), d = c.int_(lo, hi);
     final det = a * d - b * cc;
+
+    // ad - bc, twenty times. The chapter also asks when a matrix is singular,
+    // solves for a missing entry, and uses the determinant for the area of a
+    // triangle - which is the one place a Class 12 student sees what it means
+    // rather than how to compute it.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // Singular: det = 0. Built as a second row that is k times the first,
+        // then nudged when the answer should be "no".
+        //
+        // The leading entry must not be zero. det here is top x (row2b - b x k),
+        // so with top = 0 the whole first column is zeros, the determinant is 0
+        // whatever the nudge does, and the generator answered "no" to a matrix
+        // that was singular. Found by re-deriving the answers, not by reading.
+        final top = c.intExcept(lo, hi, {0});
+        final k = c.int_(2, c.band(3, 6));
+        final singular = c.coin();
+        final row2a = top * k;
+        final row2b = singular ? b * k : b * k + c.int_(1, 5);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Is this matrix singular (does it have determinant 0)?\n\n'
+              '[ $top  $b ]\n[ $row2a  $row2b ]\n\nAnswer yes or no.',
+          answer: singular ? 'yes' : 'no',
+          difficulty: c.difficulty,
+          choices: const ['yes', 'no'],
+          steps: [
+            'Determinant = ad - bc = ($top x $row2b) - ($b x $row2a).',
+            '= ${top * row2b} - ${b * row2a} = ${top * row2b - b * row2a}.',
+            singular
+                ? 'That is 0, so the matrix is singular - the second row is '
+                    'just $k times the first.'
+                : 'That is not 0, so it is not singular.',
+          ],
+          hint: 'Work out the determinant and see whether it comes to zero.',
+        );
+      case 2:
+        // Solve for a missing entry given the determinant.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'The determinant of\n\n[ $a  $b ]\n[ $cc  k ]\n\n'
+              'is $det. Find k.',
+          answer: '$d',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(d, distractors: [det, b * cc, a]),
+          steps: [
+            'Determinant = ${term(a, 'k')} - ($b x $cc) = '
+                '${term(a, 'k')} - ${b * cc}.',
+            'So ${term(a, 'k')} - ${b * cc} = $det, giving '
+                '${term(a, 'k')} = ${det + b * cc}.',
+            'k = ${det + b * cc} / $a = $d.',
+          ],
+          hint: 'Write out ad - bc with k in it, then solve.',
+        );
+      case 3:
+        // Area of a triangle. Built from a right-angled one so the area is a
+        // whole number and the determinant does the work.
+        final w = c.int_(2, c.band(5, 12));
+        final h = c.int_(2, c.band(5, 12)) * 2;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A triangle has vertices (0, 0), ($w, 0) and (0, $h).\n\n'
+              'Use the determinant formula to find its area.',
+          answer: '${w * h ~/ 2}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(w * h ~/ 2, distractors: [w * h, w + h, w]),
+          steps: [
+            'Area = half the absolute value of the determinant formed by the '
+                'three points.',
+            'That determinant comes to $w x $h = ${w * h}.',
+            'Area = ${w * h} / 2 = ${w * h ~/ 2} square units.',
+          ],
+          hint: 'The determinant gives twice the area.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Find the determinant of\n\n'
@@ -419,6 +585,80 @@ void registerAdvanced() {
     final a = [c.int_(lo, hi), c.int_(lo, hi), c.int_(lo, hi)];
     final b = [c.int_(lo, hi), c.int_(lo, hi), c.int_(lo, hi)];
     final dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+    // The dot product, twenty times. Magnitude, unit vectors, adding, and the
+    // perpendicular test are the rest of the chapter - and the last of those
+    // is the reason the dot product is taught at all.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // Magnitude, from a quadruple so the root is whole.
+        final q = c.pickByLevel(const [[1, 2, 2, 3], [2, 3, 6, 7], [1, 4, 8, 9],
+          [4, 4, 7, 9], [2, 6, 9, 11]]);
+        final sign = c.coin() ? 1 : -1;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the magnitude of the vector\n\n'
+              'a = (${q[0] * sign}, ${q[1]}, ${q[2] * sign})',
+          answer: '${q[3]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(q[3],
+              distractors: [q[0] + q[1] + q[2], q[3] + 1, q[2]]),
+          steps: [
+            'Magnitude = root(x^2 + y^2 + z^2). Signs disappear when squared.',
+            '${q[0] * q[0]} + ${q[1] * q[1]} + ${q[2] * q[2]} = '
+                '${q[3] * q[3]}.',
+            'root(${q[3] * q[3]}) = ${q[3]}.',
+          ],
+          hint: 'Square each component, add, then take the root.',
+        );
+      case 2:
+        // Adding vectors, component by component.
+        final which = c.int_(0, 2);
+        const names = ['first', 'second', 'third'];
+        return Question(
+          skillId: c.skillId,
+          prompt: 'a = (${a.join(', ')})   and   b = (${b.join(', ')})\n\n'
+              'In a + b, what is the ${names[which]} component?',
+          answer: '${a[which] + b[which]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(a[which] + b[which],
+              distractors: [a[which] * b[which], a[which], b[which]]),
+          steps: [
+            'Vectors are added component by matching component.',
+            '${a[which]} + ${b[which]} = ${a[which] + b[which]}.',
+          ],
+          hint: 'Add the components that sit in the same place.',
+        );
+      case 3:
+        // Perpendicular or not. This is what the dot product is FOR, and the
+        // sheet never once used it that way.
+        final perp = c.coin();
+        // (p, q, 0) and (-q, p, 0) are perpendicular; nudge one to break it.
+        final p = c.int_(1, c.band(4, 9));
+        final r = c.int_(1, c.band(4, 9));
+        final second = perp ? [-r, p, 0] : [-r, p + c.int_(1, 4), 0];
+        final d = p * second[0] + r * second[1];
+        return Question(
+          skillId: c.skillId,
+          prompt: 'a = ($p, $r, 0)   and   b = (${second.join(', ')})\n\n'
+              'Are these two vectors perpendicular? Answer yes or no.',
+          answer: d == 0 ? 'yes' : 'no',
+          difficulty: c.difficulty,
+          choices: const ['yes', 'no'],
+          steps: [
+            'Two vectors are perpendicular exactly when their dot product '
+                'is 0.',
+            'a . b = ($p x ${second[0]}) + ($r x ${second[1]}) + 0 = $d.',
+            d == 0
+                ? 'The dot product is 0, so yes.'
+                : 'The dot product is $d, not 0, so no.',
+          ],
+          hint: 'Work out the dot product and see whether it comes to zero.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Find the dot product of\n\n'
@@ -547,6 +787,70 @@ void registerAdvanced() {
     final a = c.int_(2, c.band(9, 25)), b = c.int_(2, c.band(9, 25));
     final x = c.int_(1, c.band(9, 30)), y = c.int_(1, c.band(9, 30));
     final z = a * x + b * y;
+
+    // Evaluating Z at one corner was the whole skill. The method is: test
+    // every corner and take the best - so a question that hands you a single
+    // corner never asks the student to do the thing the chapter is about.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Test several corners and pick the winner. This is the method.
+        final corners = <List<int>>[];
+        while (corners.length < 3) {
+          final p = [c.int_(0, c.band(8, 20)), c.int_(0, c.band(8, 20))];
+          if (corners.every((e) => a * e[0] + b * e[1] != a * p[0] + b * p[1])) {
+            corners.add(p);
+          }
+        }
+        final maximise = c.coin();
+        final values = [for (final p in corners) a * p[0] + b * p[1]];
+        final best = maximise
+            ? values.reduce((p, q) => p > q ? p : q)
+            : values.reduce((p, q) => p < q ? p : q);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Z = ${term(a, 'x')} + ${term(b, 'y')}.\n\n'
+              'The corner points of the feasible region are '
+              '${corners.map((p) => '(${p[0]}, ${p[1]})').join(', ')}.\n\n'
+              'What is the ${maximise ? 'MAXIMUM' : 'MINIMUM'} value of Z?',
+          answer: '$best',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(best,
+              distractors: [...values.where((v) => v != best)]),
+          steps: [
+            'Work out Z at every corner point.',
+            for (var i = 0; i < corners.length; i++)
+              'At (${corners[i][0]}, ${corners[i][1]}): $a x ${corners[i][0]} '
+                  '+ $b x ${corners[i][1]} = ${values[i]}.',
+            'The ${maximise ? 'largest' : 'smallest'} is $best.',
+          ],
+          hint: 'The best value always sits at a corner - so test them all.',
+        );
+      case 2:
+        // Does a point satisfy the constraint? Before any optimising, a
+        // student has to be able to check whether a point is even allowed.
+        final limit = c.int_(c.band(20, 60), c.band(80, 200));
+        final px = c.int_(1, c.band(8, 20)), py = c.int_(1, c.band(8, 20));
+        final lhs = a * px + b * py;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A constraint says  ${term(a, 'x')} + ${term(b, 'y')} '
+              '<= $limit.\n\n'
+              'Does the point ($px, $py) satisfy it? Answer yes or no.',
+          answer: lhs <= limit ? 'yes' : 'no',
+          difficulty: c.difficulty,
+          choices: const ['yes', 'no'],
+          steps: [
+            'Put the point in: $a x $px + $b x $py = $lhs.',
+            '$lhs is ${lhs <= limit ? 'not more than' : 'more than'} $limit, '
+                'so the point ${lhs <= limit ? 'does' : 'does not'} satisfy '
+                'the constraint.',
+          ],
+          hint: 'Substitute and compare with $limit.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'For the objective function Z = ${term(a, 'x')} + ${term(b, 'y')},\n\n'
@@ -668,7 +972,53 @@ void registerAdvanced() {
     // question each - so keeping them for the easy levels and the dice for the
     // hard ones left Easiest with two questions in total. The dice total below
     // is where the level actually lives.
-    final kind = c.pick(const ['twoheads', 'atleastone', 'dicesum']);
+    final kind =
+        c.pick(const ['twoheads', 'atleastone', 'dicesum', 'complement',
+          'cards']);
+    if (kind == 'complement') {
+      // Given P(E), find P(not E). One subtraction, and the fact that the two
+      // add to 1 is the backbone of the whole chapter.
+      final den = c.pick(const [4, 5, 8, 10, 20]);
+      final num = c.int_(1, den - 1);
+      final p = Fraction(num, den);
+      final notP = Fraction(den - num, den);
+      return Question(
+        skillId: c.skillId,
+        prompt: 'The probability that it rains tomorrow is ${p.toString()}.'
+            '\n\nWhat is the probability that it does NOT rain? '
+            '(fraction in lowest terms)',
+        answer: notP.toString(),
+        difficulty: c.difficulty,
+        steps: [
+          'An event and its complement always add up to 1.',
+          '1 - $num/$den = ${den - num}/$den.',
+          'In lowest terms that is ${notP.toString()}.',
+        ],
+        hint: 'P(E) + P(not E) = 1.',
+      );
+    }
+    if (kind == 'cards') {
+      // A pack of cards, which every Class 12 probability exercise uses.
+      final want = c.pickByLevel(const [
+        ('a red card', 26), ('a spade', 13), ('an ace', 4),
+        ('a face card', 12), ('a red king', 2),
+      ]);
+      final f = Fraction(want.$2, 52);
+      return Question(
+        skillId: c.skillId,
+        prompt: 'One card is drawn from a well shuffled pack of 52.\n\n'
+            'What is the probability it is ${want.$1}? '
+            '(fraction in lowest terms)',
+        answer: f.toString(),
+        difficulty: c.difficulty,
+        steps: [
+          'A pack has 52 cards in 4 suits of 13.',
+          '${want.$2} of them are ${want.$1}.',
+          '${want.$2}/52 = ${f.toString()}.',
+        ],
+        hint: 'Count how many of the 52 fit, then simplify.',
+      );
+    }
     return switch (kind) {
       'twoheads' => Question(
           skillId: c.skillId,
@@ -836,6 +1186,76 @@ void registerAdvanced() {
     final x = c.int_(1, c.band(3, 8));
     // y = ax^2, slope at x is 2ax
     final slope = 2 * a * x;
+
+    // The slope of a tangent was the only application. Turning points,
+    // increasing and decreasing, and rate of change are the rest of the
+    // chapter, and the first of those is most of its exam marks.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // The turning point of a quadratic - where the derivative is zero.
+        final p = c.int_(1, c.band(4, 10));
+        // y = x^2 - 2px + q has dy/dx = 2x - 2p, zero at x = p.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'For the curve  y = ${term(1, 'x', power: 2)} - '
+              '${term(2 * p, 'x')} + 7,\n\n'
+              'at what value of x is the tangent horizontal?',
+          answer: '$p',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(p, distractors: [2 * p, p * p, 7]),
+          steps: [
+            'A horizontal tangent means the derivative is 0.',
+            'dy/dx = ${term(2, 'x')} - ${2 * p}.',
+            '${term(2, 'x')} - ${2 * p} = 0 gives x = $p.',
+          ],
+          hint: 'Differentiate and set the result to zero.',
+        );
+      case 2:
+        // Increasing or decreasing at a point - the sign of the derivative,
+        // which is a different question from its value.
+        final p = c.int_(1, c.band(4, 10));
+        final at = c.intExcept(1, c.band(6, 14), {p});
+        final slopeHere = 2 * at - 2 * p;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'For the curve  y = ${term(1, 'x', power: 2)} - '
+              '${term(2 * p, 'x')},\n\n'
+              'is the curve increasing or decreasing at x = $at?',
+          answer: slopeHere > 0 ? 'increasing' : 'decreasing',
+          difficulty: c.difficulty,
+          choices: const ['increasing', 'decreasing'],
+          steps: [
+            'dy/dx = ${term(2, 'x')} - ${2 * p}.',
+            'At x = $at: ${2 * at} - ${2 * p} = $slopeHere.',
+            'The derivative is ${slopeHere > 0 ? 'positive' : 'negative'}, so '
+                'the curve is ${slopeHere > 0 ? 'increasing' : 'decreasing'}.',
+          ],
+          hint: 'It is the SIGN of the derivative that matters, not its size.',
+        );
+      case 3:
+        // Rate of change, which is what a derivative means outside a graph.
+        final r = c.int_(1, c.band(3, 8));
+        final t = c.int_(1, c.band(4, 9));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'The distance travelled is  s = ${term(r, 't', power: 2)}  '
+              'metres after t seconds.\n\n'
+              'What is the speed at t = $t seconds, in metres per second?',
+          answer: '${2 * r * t}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(2 * r * t,
+              distractors: [r * t * t, r * t, 2 * r]),
+          steps: [
+            'Speed is the rate of change of distance: ds/dt.',
+            'ds/dt = ${term(2 * r, 't')}.',
+            'At t = $t: 2 x $r x $t = ${2 * r * t} m/s.',
+          ],
+          hint: 'Differentiate the distance with respect to time.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'For the curve  y = ${term(a, 'x')}^2,\n\n'
@@ -877,6 +1297,94 @@ void registerAdvanced() {
     final b = c.int_(2, c.band(4, 8));
     // integral from 0 to b of 2x dx = b^2
     final ans = b * b;
+
+    // The integral of 2x from 0 to b, and nothing else - so the lower limit
+    // was always 0, the "subtract the bottom" step never actually did
+    // anything, and every question integrated to x^2 so the power rule was
+    // never exercised. Application of Integrals is about areas, and this
+    // generator serves that chapter too.
+    switch (c.variantByLevel(5)) {
+      case 1:
+        // A lower limit that is not zero, so both limits are used.
+        final lo = c.int_(1, b - 1);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Evaluate the integral of  2x  from $lo to $b.',
+          answer: '${b * b - lo * lo}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(b * b - lo * lo,
+              distractors: [b * b, lo * lo, b - lo]),
+          steps: [
+            'The integral of 2x is x^2.',
+            'Put in the limits: $b^2 - $lo^2.',
+            '${b * b} - ${lo * lo} = ${b * b - lo * lo}.',
+          ],
+          hint: 'Top limit minus bottom limit - and the bottom is not 0 here.',
+        );
+      case 3:
+        // A different integrand. With only 2x in the generator the power rule
+        // was never exercised - every question integrated to x^2 and the
+        // student could learn that one result instead of the rule.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Evaluate the integral of  ${term(3, 'x', power: 2)}  '
+              'from 0 to $b.',
+          answer: '${b * b * b}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(b * b * b,
+              distractors: [b * b, 3 * b * b, 3 * b]),
+          steps: [
+            'Raise the power by 1 and divide by the new power: '
+                '${term(3, 'x', power: 2)} integrates to '
+                '${term(1, 'x', power: 3)}.',
+            'Put in the limits: $b^3 - 0^3.',
+            '${b * b * b} - 0 = ${b * b * b}.',
+          ],
+          hint: 'Add one to the power, then divide by the new power.',
+        );
+      case 4:
+        // Integrating a constant. The area is a rectangle, so a student can
+        // check the calculus against something they can see - and nothing
+        // else in this generator ever integrates anything but a power of x.
+        final h = c.int_(2, c.band(5, 12));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the area under the line  y = $h  between x = 0 and '
+              'x = $b, above the x-axis.',
+          answer: '${h * b}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(h * b, distractors: [h + b, b * b, h]),
+          steps: [
+            'The integral of the constant $h is ${term(h, 'x')}.',
+            'Put in the limits: $h x $b - 0 = ${h * b}.',
+            'It is a rectangle $b wide and $h high, so ${h * b} square units '
+                'is right.',
+          ],
+          hint: 'Integrating a constant k gives kx.',
+        );
+      case 2:
+        // Area under a curve, which is what the chapter is called. Same
+        // integral, and the reason it exists.
+        final k = c.int_(1, c.band(2, 5));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the area under the curve  y = ${term(2 * k, 'x')}  '
+              'between x = 0 and x = $b, above the x-axis.',
+          answer: '${k * b * b}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(k * b * b,
+              distractors: [2 * k * b, b * b, k * b]),
+          steps: [
+            'The area under a curve is the definite integral.',
+            'The integral of ${term(2 * k, 'x')} is ${term(k, 'x')}^2.',
+            'Put in the limits: $k x $b^2 - 0 = ${k * b * b} square units.',
+          ],
+          hint: 'Integrate, then subtract the value at the lower limit.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Evaluate the integral of  2x  from 0 to $b.',
@@ -894,6 +1402,58 @@ void registerAdvanced() {
 
   register('diff_equations', (c) {
     final k = c.int_(2, c.band(4, 9));
+
+    // One equation, dy/dx = kx, every time. Order and degree are the first
+    // thing the chapter defines and are worth easy marks; a separable equation
+    // is what the rest of it is about.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Order: the highest derivative that appears. Recall, and reliably
+        // examined.
+        final order = c.pickByLevel(const [1, 2, 3]);
+        const written = {
+          1: 'dy/dx + 5y = 0',
+          2: 'd2y/dx2 + 3 dy/dx + 2y = 0',
+          3: 'd3y/dx3 + y = 0',
+        };
+        return Question(
+          skillId: c.skillId,
+          prompt: 'What is the order of the differential equation\n\n'
+              '${written[order]}',
+          answer: '$order',
+          difficulty: c.difficulty,
+          choices: const ['1', '2', '3'],
+          steps: [
+            'The order is the highest derivative that appears.',
+            'Here the highest is '
+                '${order == 1 ? 'dy/dx' : (order == 2 ? 'd2y/dx2' : 'd3y/dx3')}'
+                ', so the order is $order.',
+          ],
+          hint: 'Look for the highest derivative, not the highest power.',
+        );
+      case 2:
+        // Using the constant. A general solution is a family of curves; the
+        // initial condition picks one, and that is the step students skip.
+        final y0 = c.int_(1, c.band(5, 15));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'The general solution of a differential equation is\n\n'
+              'y = ${term(k, 'x')} + C\n\n'
+              'If y = ${k + y0} when x = 1, what is C?',
+          answer: '$y0',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(y0, distractors: [k, k + y0, y0 + 1]),
+          steps: [
+            'Put x = 1 and y = ${k + y0} into y = ${term(k, 'x')} + C.',
+            '${k + y0} = $k + C.',
+            'C = ${k + y0} - $k = $y0.',
+          ],
+          hint: 'Substitute the given values and solve for C.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Solve  dy/dx = ${term(k, 'x')}\n\n'

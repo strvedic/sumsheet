@@ -712,7 +712,63 @@ exactly one question shape: `matrices`, `determinants`, `vectors`,
 `definite-integrals`, `differential-equations`, `linear-programming`,
 `derivative-applications` and `integration`.
 
-## 21. Removed, not ported
+## 21. Class 12, and the end of the parent complaint
+
+`generators/advanced.dart`
+
+Class 12 went from **11 thin chapters to 0**, which closes out the whole
+report. Two of the eleven had already fixed themselves: Continuity and
+Differentiability shares `limits` with Class 11, and Three Dimensional
+Geometry shares `three-d-geometry`.
+
+| Skill | Before | After | Added |
+|---|---|---|---|
+| `matrices` | 1 | 5 | addition, scalar multiple, transpose, and **whether the product exists at all** |
+| `determinants` | 1 | 4 | singular or not, solve for a missing entry, area of a triangle |
+| `vectors` | 1 | 4 | magnitude, addition, and the perpendicular test |
+| `linear-programming` | 1 | 3 | test every corner and pick the best, check a point against a constraint |
+| `differential-equations` | 1 | 3 | order, and using an initial condition to find C |
+| `definite-integrals` | 1 | 5 | a non-zero lower limit, a different integrand, a constant, area under a curve |
+| `derivative-applications` | 2 | 4 | turning points, increasing or decreasing, rate of change |
+| `probability-events` | 3 | 5 | the complement, a pack of cards |
+
+Several were not merely repetitive:
+
+- `linear-programming` handed the student one corner point. The method **is**
+  testing every corner and taking the best, so the one question in the chapter
+  never asked anyone to do the thing the chapter is about.
+- `definite-integrals` always had a lower limit of 0, so the "subtract the
+  bottom" step never did anything, and always integrated 2x, so the power rule
+  was never exercised - a student could learn the single result x^2 instead of
+  the rule.
+- `matrices` never asked whether a product exists. That is the first thing the
+  chapter teaches and a standard exam mark.
+
+**A wrong answer caught by verification, not by reading.** The new singular
+matrix question builds a second row as k times the first, then nudges it when
+the answer should be "no". With a leading entry of **0** the whole first column
+is zeros, so the determinant is 0 whatever the nudge does - and the generator
+confidently answered "no" to a matrix that was singular. 19 of 7359 sampled
+answers. The leading entry is now non-zero by construction.
+
+**Verified independently:** 7359 Class 12 answers re-derived from their printed
+prompts - every determinant recomputed as ad - bc, every solve-for-k
+substituted back, every dot product and magnitude recomputed, every LPP corner
+evaluated and compared, and every definite integral evaluated from its limits.
+
+### Where the senior classes ended up
+
+| Class | Thin chapters before | After |
+|---|---|---|
+| 9 | 4 | **0** |
+| 10 | 6 | **2** |
+| 11 | 8 | **0** |
+| 12 | 11 | **0** |
+
+The two left in Class 10 are Quadratic Equations and Circles, both at 3 shapes,
+which is thin rather than broken.
+
+## 22. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**
