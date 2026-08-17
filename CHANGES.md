@@ -661,7 +661,58 @@ generators left are `binomial-theorem`, `straight-line`, `three-d-geometry`,
 `matrices`, `determinants`, `vectors`, `definite-integrals`,
 `differential-equations` and `linear-programming`.
 
-## 20. Removed, not ported
+## 20. Class 11, same treatment
+
+`generators/advanced.dart`, `senior.dart`
+
+Class 11 went from **8 thin chapters to 0**. One of the eight fixed itself:
+Sequences and Series shares `arithmetic-progression` with Class 10, so item 19
+carried it over.
+
+| Skill | Before | After | Added |
+|---|---|---|---|
+| `binomial-theorem` | 1 | 4 | how many terms (n+1, not n), a bare nCr, the constant term |
+| `straight-line` | 1 | 5 | slope and intercept off y = mx + c, parallel and perpendicular, evaluate at x, x-intercept |
+| `three-d-geometry` | 1 | 4 | a genuinely 3D distance, which octant, distance from a coordinate plane |
+| `permutation-combination` | 2 | 5 | the multiplication principle, n!, and *which of the two is this* |
+| `inequalities` | 2 | 4 | dividing by a negative flips the sign, smallest whole number that works |
+| `grouped-data` | 1 | 3 | mean deviation, and an actual frequency table |
+| `limits` | 1 | 3 | substitution with no 0/0, and a factorisation that is not a difference of squares |
+
+Two of those were not just thin but **wrong in spirit**:
+
+- `three-d-geometry` was not three-dimensional. dz was always 0, so every "3D
+  distance" was a flat 2D one with a third number carried along unchanged.
+  Fixed with Pythagorean quadruples - (2,3,6,7), (1,4,8,9), (2,6,9,11) - so the
+  root stays whole with all three differences non-zero.
+- `inequalities` solved every one exactly like an equation, which misses the
+  single thing that makes an inequality different: dividing by a negative
+  reverses the sign. That is the whole chapter and it never appeared.
+
+`limits` was a difference of two squares over (x - a) every time, so a student
+learnt "cancel and substitute" without ever having to decide whether there was
+anything to cancel.
+
+**Caught by an existing test:** the new nCr variant printed `the coefficient of
+x^1`. Item 17's notation test found it immediately.
+
+**Structure:** `straight_line`'s slope question builds its own multiple-choice
+list by hand, because a slope is often negative and `choicesAround` works in
+non-negatives. Rather than nest that special case inside a switch, the other
+four questions live in a top-level `_lineExtras`.
+
+**Verified independently:** 3898 Class 11 answers re-derived from their printed
+prompts - every binomial coefficient recomputed, every 3D distance checked
+against dx^2 + dy^2 + dz^2, and every negative-coefficient inequality checked
+to confirm the printed sign really is the reversed one.
+
+**Still to do:** Class 12, 11 thin chapters. Nine generators there still have
+exactly one question shape: `matrices`, `determinants`, `vectors`,
+`three-d-geometry` (Class 12 uses it too, so item 20 has already improved it),
+`definite-integrals`, `differential-equations`, `linear-programming`,
+`derivative-applications` and `integration`.
+
+## 21. Removed, not ported
 
 `engine/bin/sync_skill_map.dart` - copies the master skill map into
 `app/assets/`. There is no app here. **Do not delete it from mathroot.**

@@ -620,6 +620,14 @@ void main() {
         'arithmetic-progression': 5,
         'circle-area': 4,
         'triangle-similarity': 4,
+        // Class 11
+        'binomial-theorem': 4,
+        'straight-line': 4,
+        'three-d-geometry': 4,
+        'inequalities': 3,
+        'permutation-combination': 4,
+        'grouped-data': 3,
+        'limits': 3,
       };
       for (final entry in leastShapes.entries) {
         final shapes = <String>{};

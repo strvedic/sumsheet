@@ -356,6 +356,51 @@ void registerSenior() {
     final b = c.int_(1, c.band(8, 25));
     final rhs = a * x + b;
     final less = c.coin();
+
+    // Solving it like an equation was the whole skill, which misses the one
+    // thing that makes an inequality different: dividing by a negative flips
+    // the sign. That is the entire chapter, and it never appeared.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Negative coefficient - the sign turns round.
+        final flipped = -a * x + b;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Solve:  ${term(-a, 'x')} + $b ${less ? '<' : '>'} $flipped'
+              '\n\nThe answer is x ${less ? '>' : '<'} k. What is k?',
+          answer: '$x',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(x, distractors: [-x, flipped, a * x]),
+          steps: [
+            'Take $b from both sides: ${term(-a, 'x')} '
+                '${less ? '<' : '>'} ${flipped - b}.',
+            'Now divide by -$a. Dividing by a NEGATIVE turns the sign round.',
+            'So x ${less ? '>' : '<'} $x.',
+          ],
+          hint: 'Dividing both sides by a negative number reverses < and >.',
+        );
+      case 2:
+        // The smallest whole number that works. An inequality has infinitely
+        // many answers, and picking one out is what the chapter builds to.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Solve:  ${term(a, 'x')} + $b > $rhs\n\n'
+              'What is the smallest whole number x that works?',
+          answer: '${x + 1}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(x + 1, distractors: [x, x + 2, rhs]),
+          steps: [
+            'Take $b from both sides: ${term(a, 'x')} > ${rhs - b}.',
+            'Divide by $a: x > $x.',
+            'x has to be MORE than $x, so the smallest whole number is '
+                '${x + 1} - not $x itself.',
+          ],
+          hint: 'x > $x does not include $x.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Solve:  ${term(a, 'x')} + $b ${less ? '<' : '>'} $rhs\n\n'
@@ -517,6 +562,77 @@ void registerSenior() {
       values.add(c.int_(5, c.band(30, 90)));
     }
     final sorted = [...values]..sort();
+
+    // The range was the only question, and it is the crudest measure of spread
+    // there is. Mean deviation and reading a frequency table are the rest of
+    // the chapter - and "grouped data" that never showed a frequency table was
+    // not grouped at all.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Mean deviation about the mean. Readings are built in pairs either
+        // side of a whole mean, so every distance is whole and the method is
+        // what is being practised.
+        final mean = c.int_(c.band(10, 30), c.band(30, 60));
+        final off = [for (var i = 0; i < 3; i++) c.int_(1, c.band(4, 12))];
+        final marks = [
+          for (final o in off) mean - o,
+          for (final o in off) mean + o,
+        ]..shuffle(c.rng);
+        final total = off.reduce((a, b) => a + b) * 2;
+        if (total % 6 == 0) {
+          return Question(
+            skillId: c.skillId,
+            prompt: 'Six readings: ${marks.join(', ')}\n\n'
+                'Their mean is $mean. What is the mean deviation about the '
+                'mean?',
+            answer: '${total ~/ 6}',
+            difficulty: c.difficulty,
+            choices:
+                c.choicesAround(total ~/ 6, distractors: [total, mean, 6]),
+            steps: [
+              'Find how far each reading is from $mean, ignoring the sign.',
+              'Those distances add up to $total.',
+              '$total / 6 = ${total ~/ 6}.',
+            ],
+            hint: 'Distances are never negative - drop the minus signs.',
+          );
+        }
+        break;
+      case 2:
+        // An actual frequency table.
+        const marks = [10, 20, 30, 40];
+        final freq = [for (var i = 0; i < 4; i++) c.int_(1, c.band(5, 12))];
+        final n = freq.reduce((a, b) => a + b);
+        final sum = [
+          for (var i = 0; i < 4; i++) marks[i] * freq[i],
+        ].reduce((a, b) => a + b);
+        // Only when the mean lands whole. A student practising the method
+        // should not be stopped by a recurring decimal.
+        if (sum % n == 0) {
+          return Question(
+            skillId: c.skillId,
+            prompt: 'Marks and how many students got them:\n\n'
+                '${[for (var i = 0; i < 4; i++) '${marks[i]} marks - '
+                    '${freq[i]} students'].join(',   ')}\n\n'
+                'What is the mean mark?',
+            answer: '${sum ~/ n}',
+            difficulty: c.difficulty,
+            choices: c.choicesAround(sum ~/ n, distractors: [n, 25, sum ~/ 4]),
+            steps: [
+              'Multiply each mark by how many students got it, then add: '
+                  '$sum.',
+              'Count the students: $n.',
+              '$sum / $n = ${sum ~/ n}.',
+            ],
+            hint: 'Weight each mark by how many students got it - do not just '
+                'average 10, 20, 30 and 40.',
+          );
+        }
+        break;
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Marks scored by six students:\n\n${values.join(', ')}\n\n'

@@ -155,6 +155,79 @@ void registerAdvanced() {
       rFact *= i;
     }
     final ans = perm ? p : p ~/ rFact;
+
+    // nPr and nCr were the only two questions. The chapter starts with the
+    // multiplication principle and ends with arrangements of a word, and a
+    // student who has only met the two formulas cannot tell which to reach for
+    // - which is the actual difficulty of the topic.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // The multiplication principle, before any formula exists.
+        final shirts = c.int_(2, c.band(4, 8));
+        final trousers = c.int_(2, c.band(4, 8));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A boy has $shirts shirts and $trousers pairs of '
+              'trousers.\n\nHow many different outfits can he make?',
+          answer: '${shirts * trousers}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(shirts * trousers,
+              distractors: [shirts + trousers, shirts, trousers]),
+          steps: [
+            'For each of the $shirts shirts there are $trousers choices of '
+                'trousers.',
+            '$shirts x $trousers = ${shirts * trousers} outfits.',
+          ],
+          hint: 'Multiply the choices, do not add them.',
+        );
+      case 2:
+        // Arranging all of them - n! - which students confuse with nPr.
+        final k = c.int_(3, c.band(4, 6));
+        var fact = 1;
+        for (var i = 2; i <= k; i++) {
+          fact *= i;
+        }
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In how many ways can $k different books be arranged on a '
+              'shelf?',
+          answer: '$fact',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(fact, distractors: [k * k, k, fact ~/ k]),
+          steps: [
+            'All $k are being arranged, so this is $k!.',
+            '$k! = ${List.generate(k, (i) => k - i).join(' x ')} = $fact.',
+          ],
+          hint: 'Every book is used, so it is n factorial.',
+        );
+      case 3:
+        // Which one is it? Naming the tool is the skill; the arithmetic is
+        // the easy part once you have chosen.
+        final ordered = c.coin();
+        return Question(
+          skillId: c.skillId,
+          prompt: ordered
+              ? 'Three prizes - first, second and third - are given to 3 of '
+                  '$n students.\n\nIs this a permutation or a combination?'
+              : 'A team of 3 is picked from $n students, with no captain.\n\n'
+                  'Is this a permutation or a combination?',
+          answer: ordered ? 'permutation' : 'combination',
+          difficulty: c.difficulty,
+          choices: const ['permutation', 'combination'],
+          steps: [
+            ordered
+                ? 'First and second are different prizes, so the ORDER matters.'
+                : 'The three team members are just a group - swapping them '
+                    'changes nothing.',
+            'Order ${ordered ? 'matters' : 'does not matter'}, so it is a '
+                '${ordered ? 'permutation' : 'combination'}.',
+          ],
+          hint: 'Ask whether swapping two of them gives a different result.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: perm
@@ -183,19 +256,87 @@ void registerAdvanced() {
     final a = c.int_(1, c.band(2, 4));
     // Coefficient of x^(n-1) in (x + a)^n is nC1 * a = n*a.
     final coeff = n * a;
-    return Question(
-      skillId: c.skillId,
-      prompt: 'In the expansion of (x + $a)^$n,\n\n'
-          'what is the coefficient of x^${n - 1}?',
-      answer: '$coeff',
-      difficulty: c.difficulty,
-      choices: c.choicesAround(coeff, distractors: [n + a, a * a, n]),
-      steps: [
-        'The term with x^${n - 1} comes from choosing $a exactly once.',
-        'That is ${n}C1 x $a = $n x $a = $coeff.',
-      ],
-      hint: 'Use nC1 for the second term of the expansion.',
-    );
+
+    int nCr(int n, int r) {
+      var v = 1;
+      for (var i = 0; i < r; i++) {
+        v = v * (n - i) ~/ (i + 1);
+      }
+      return v;
+    }
+
+    // One question - the coefficient of the second term - for a whole chapter
+    // whose exam questions are almost always "find the middle term" or "find
+    // the term independent of x". A student could learn nC1 and nothing else.
+    switch (c.variantByLevel(4)) {
+      case 0:
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In the expansion of (x + $a)^$n,\n\n'
+              'what is the coefficient of x^${n - 1}?',
+          answer: '$coeff',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(coeff, distractors: [n + a, a * a, n]),
+          steps: [
+            'The term with x^${n - 1} comes from choosing $a exactly once.',
+            'That is ${n}C1 x $a = $n x $a = $coeff.',
+          ],
+          hint: 'Use nC1 for the second term of the expansion.',
+        );
+      case 1:
+        // How many terms there are. Students answer n, and the answer is n+1 -
+        // the off-by-one the chapter is built to catch.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How many terms are there in the expansion of '
+              '(x + $a)^$n?',
+          answer: '${n + 1}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(n + 1, distractors: [n, n - 1, 2 * n]),
+          steps: [
+            'The powers of x run from $n all the way down to 0.',
+            'That is $n, ${n - 1}, ..., 1, 0 - which is ${n + 1} terms, not $n.',
+          ],
+          hint: 'Do not forget the term where x has power 0.',
+        );
+      case 2:
+        // A binomial coefficient on its own, which is what every other
+        // question in the chapter is built out of.
+        final r = c.int_(1, n - 1);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In the expansion of (x + 1)^$n, what is the coefficient of '
+              '${term(1, 'x', power: n - r)}?\n\n(That is ${n}C$r.)',
+          answer: '${nCr(n, r)}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(nCr(n, r),
+              distractors: [n * r, n + r, nCr(n, r) + 1]),
+          steps: [
+            '${n}C$r = ${List.generate(r, (i) => n - i).join(' x ')} / '
+                '${List.generate(r, (i) => i + 1).join(' x ')}.',
+            'That comes to ${nCr(n, r)}.',
+          ],
+          hint: 'nCr counts the ways of choosing r things from n.',
+        );
+      default:
+        // The constant term - the one every board paper asks for, and the one
+        // students cannot do because it needs the general term, not a shortcut.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'In the expansion of (x + $a)^$n,\n\n'
+              'what is the term that has no x in it?',
+          answer: '${_pow(a, n)}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(_pow(a, n),
+              distractors: [a * n, _pow(a, n - 1), n]),
+          steps: [
+            'The term with no x comes from taking $a every single time.',
+            'That is $a multiplied by itself $n times.',
+            '$a^$n = ${_pow(a, n)}.',
+          ],
+          hint: 'Which term uses none of the x at all?',
+        );
+    }
   });
 
   register('complex_numbers', (c) {
@@ -305,6 +446,86 @@ void registerAdvanced() {
     final x1 = c.int_(-reach, reach),
         y1 = c.int_(-reach, reach),
         z1 = c.int_(-reach, reach);
+
+    // One question, and it was not even three-dimensional: dz was always 0, so
+    // every "3D distance" was a flat 2D one with a third number carried along
+    // unchanged. The chapter is about octants, distance from the axes and the
+    // planes, and the midpoint - none of which was here.
+    switch (c.variantByLevel(4)) {
+      case 1:
+        // A genuinely three-dimensional distance. (1,2,2), (2,3,6) and
+        // (1,4,8) are the Pythagorean quadruples that keep the root whole.
+        final q = c.pickByLevel(const [[1, 2, 2, 3], [2, 3, 6, 7], [1, 4, 8, 9],
+          [4, 4, 7, 9], [2, 6, 9, 11]]);
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the distance between the points\n\n'
+              '($x1, $y1, $z1)   and   '
+              '(${x1 + q[0]}, ${y1 + q[1]}, ${z1 + q[2]})',
+          answer: '${q[3]}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(q[3],
+              distractors: [q[0] + q[1] + q[2], q[3] + 1, q[2]]),
+          steps: [
+            'Distance = root((dx)^2 + (dy)^2 + (dz)^2).',
+            'Differences: ${q[0]}, ${q[1]} and ${q[2]}.',
+            '${q[0] * q[0]} + ${q[1] * q[1]} + ${q[2] * q[2]} = '
+                '${q[3] * q[3]}, and root(${q[3] * q[3]}) = ${q[3]}.',
+          ],
+          hint: 'Same as in two dimensions, with a third square added.',
+        );
+      case 2:
+        // Which octant. The 3D version of "which quadrant", and there are
+        // eight of them because each coordinate can go either way.
+        final px = c.intExcept(-reach, reach, {0});
+        final py = c.intExcept(-reach, reach, {0});
+        final pz = c.intExcept(-reach, reach, {0});
+        final octant = [px, py, pz].where((v) => v < 0).length;
+        return Question(
+          skillId: c.skillId,
+          prompt: 'The point ($px, $py, $pz) is in three-dimensional space.\n\n'
+              'How many of its coordinates are negative?',
+          answer: '$octant',
+          difficulty: c.difficulty,
+          choices: const ['0', '1', '2', '3'],
+          steps: [
+            'Look at each coordinate in turn: $px, $py, $pz.',
+            'Space is divided into 8 octants by the signs of the three '
+                'coordinates.',
+            '$octant of these are negative.',
+          ],
+          hint: 'Check the sign of x, then y, then z.',
+        );
+      case 3:
+        // Distance from a coordinate plane. The xy-plane is where z is 0, so
+        // the distance is |z| - and students reach for the whole formula.
+        final plane = c.pick(const ['xy', 'yz', 'zx']);
+        final away = switch (plane) {
+          'xy' => z1.abs(),
+          'yz' => x1.abs(),
+          _ => y1.abs(),
+        };
+        return Question(
+          skillId: c.skillId,
+          prompt: 'How far is the point ($x1, $y1, $z1) from the '
+              '$plane-plane?',
+          answer: '$away',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(away,
+              distractors: [x1.abs(), y1.abs(), z1.abs()]),
+          steps: [
+            'On the $plane-plane, the '
+                '${plane == 'xy' ? 'z' : (plane == 'yz' ? 'x' : 'y')} '
+                'coordinate is 0.',
+            'So the distance is how far that one coordinate is from 0.',
+            'That is $away - distances are never negative.',
+          ],
+          hint: 'Which coordinate is zero everywhere on that plane?',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Find the distance between the points\n\n'
@@ -485,6 +706,11 @@ void registerAdvanced() {
   });
 
   register('straight_line', (c) {
+    // Slope from two points was the whole chapter. Straight Lines is mostly
+    // about turning a slope into an equation and comparing two lines, so the
+    // other four questions live in _lineExtras.
+    final variant = c.variantByLevel(5);
+    if (variant > 0) return _lineExtras(c, variant);
     final x1 = c.int_(-6, 4);
     final run = c.int_(1, c.band(3, 6));
     final slope = c.int_(1, c.band(3, 8)) * (c.coin() ? 1 : -1);
@@ -513,10 +739,61 @@ void registerAdvanced() {
     );
   });
 
+
   // ---------------------------------------------------------------- calculus
 
   register('limits', (c) {
     final a = c.int_(2, c.band(5, 12));
+
+    // Difference of two squares over (x - a), every single time. A student
+    // learns "cancel and substitute" without ever meeting the limit that needs
+    // no work at all, or one that factorises a different way - and so never
+    // learns to check for 0/0 before reaching for the trick.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Direct substitution. Not every limit is 0/0, and a student who
+        // always factorises is guessing rather than deciding.
+        final b = c.int_(1, c.band(4, 12));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the limit as x approaches $a of\n\n'
+              '${term(1, 'x', power: 2)} + ${term(b, 'x')}',
+          answer: '${a * a + b * a}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(a * a + b * a,
+              distractors: [a + b, a * a, 2 * a + b]),
+          steps: [
+            'Put x = $a straight in and see what happens.',
+            '$a^2 + $b x $a = ${a * a} + ${b * a} = ${a * a + b * a}.',
+            'No 0/0, so there is nothing to factorise - that is the answer.',
+          ],
+          hint: 'Try substituting first. Only factorise if you get 0/0.',
+        );
+      case 2:
+        // Factorises, but as (x - a)(x - b) rather than a difference of
+        // squares - so the cancelling has to be found rather than recalled.
+        final b = c.intExcept(1, c.band(5, 12), {a});
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Find the limit as x approaches $a of\n\n'
+              '(${term(1, 'x', power: 2)} - ${term(a + b, 'x')} + ${a * b}) '
+              '/ (x - $a)',
+          answer: '${a - b}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(a - b, distractors: [a + b, a * b, b - a]),
+          steps: [
+            'Putting x = $a straight in gives 0/0, so factorise the top.',
+            'It factorises as (x - $a)(x - $b).',
+            'The (x - $a) cancels, leaving x - $b.',
+            'Now put x = $a: $a - $b = ${a - b}.',
+          ],
+          hint: 'Find two numbers that multiply to ${a * b} and add to '
+              '${a + b}.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Find the limit as x approaches $a of\n\n'
@@ -664,4 +941,116 @@ Question _diceSum(GenContext c) {
     ],
     hint: 'Count the pairs that add to $target, out of 36.',
   );
+}
+
+/// Integer power. `pow` from dart:math returns a double, and a coefficient
+/// printed as 81.0 on a worksheet is not a coefficient.
+int _pow(int base, int exponent) {
+  var v = 1;
+  for (var i = 0; i < exponent; i++) {
+    v *= base;
+  }
+  return v;
+}
+
+/// The rest of the Straight Lines chapter.
+///
+/// Slope from two points was the only question in it, and that one keeps its
+/// own hand-built choices because a slope is often negative and
+/// [GenContext.choicesAround] works in non-negatives. Split out rather than
+/// nested so that special case stays readable.
+Question _lineExtras(GenContext c, int variant) {
+  final m = c.int_(1, c.band(3, 8)) * (c.coin() ? 1 : -1);
+  final c0 = c.int_(-c.band(4, 12), c.band(4, 12));
+  final x = c.int_(1, c.band(4, 9));
+
+  switch (variant) {
+    case 1:
+      // Read the slope and intercept straight off y = mx + c.
+      final wantSlope = c.coin();
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A line has the equation  y = ${term(m, 'x')} '
+            '${c0 < 0 ? '-' : '+'} ${c0.abs()}\n\n'
+            'What is its ${wantSlope ? 'slope' : 'y-intercept'}?',
+        answer: '${wantSlope ? m : c0}',
+        difficulty: c.difficulty,
+        steps: [
+          'In y = mx + c, m is the slope and c is where it crosses the '
+              'y-axis.',
+          'Here m = $m and c = $c0.',
+          'So the ${wantSlope ? 'slope' : 'y-intercept'} is '
+              '${wantSlope ? m : c0}.',
+        ],
+        hint: 'Compare it with y = mx + c.',
+      );
+    case 2:
+      // Parallel and perpendicular. The negative reciprocal is the fact
+      // students lose marks on, and it never appeared.
+      final parallel = c.coin();
+      // Perpendicular slopes stay whole only when the slope is 1 or -1, so
+      // the question asks for the rule rather than an awkward fraction.
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A line has slope $m.\n\n'
+            'What is the slope of a line ${parallel ? 'parallel' : 'perpendicular'} '
+            'to it? ${parallel ? '' : 'Write a fraction like -1/2 if you need to.'}',
+        answer: parallel
+            ? '$m'
+            : (m == 1 ? '-1' : (m == -1 ? '1' : '${m < 0 ? '' : '-'}1/${m.abs()}')),
+        difficulty: c.difficulty,
+        steps: [
+          parallel
+              ? 'Parallel lines have exactly the same slope.'
+              : 'Perpendicular slopes multiply to -1, so you flip the '
+                  'fraction and change the sign.',
+          parallel
+              ? 'So the slope is $m.'
+              : 'The negative reciprocal of $m is '
+                  '${m == 1 ? '-1' : (m == -1 ? '1' : '${m < 0 ? '' : '-'}1/${m.abs()}')}.',
+        ],
+        hint: parallel
+            ? 'Parallel means same steepness.'
+            : 'Turn it upside down and flip the sign.',
+      );
+    case 3:
+      // Point-slope: build the equation, then evaluate it. Asking for the
+      // value keeps the answer a single number the app can mark.
+      final y = m * x + c0;
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A line has slope $m and passes through (0, $c0).\n\n'
+            'What is y when x = $x?',
+        answer: '$y',
+        difficulty: c.difficulty,
+        steps: [
+          'It crosses the y-axis at $c0, so the line is '
+              'y = ${term(m, 'x')} ${c0 < 0 ? '-' : '+'} ${c0.abs()}.',
+          'Put x = $x in: $m x $x ${c0 < 0 ? '-' : '+'} ${c0.abs()} = $y.',
+        ],
+        hint: 'Write y = mx + c first, then substitute.',
+      );
+    default:
+      // Where the line crosses the x-axis. Set y to 0 - the step students
+      // forget, because every other question hands them x.
+      final slope = c.int_(1, c.band(3, 6)) * (c.coin() ? 1 : -1);
+      final root = c.int_(1, c.band(4, 9));
+      // Chosen so the intercept is a whole number: y = m(x - root).
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A line has the equation  y = ${term(slope, 'x')} '
+            '${-slope * root < 0 ? '-' : '+'} ${(slope * root).abs()}\n\n'
+            'Where does it cross the x-axis? Give the value of x.',
+        answer: '$root',
+        difficulty: c.difficulty,
+        choices: c.choicesAround(root,
+            distractors: [slope, slope * root, root + 1]),
+        steps: [
+          'On the x-axis, y is 0.',
+          'So ${term(slope, 'x')} = ${slope * root}.',
+          'x = ${slope * root} / $slope = $root.',
+        ],
+        hint: 'Put y = 0 and solve for x.',
+      );
+  }
 }
