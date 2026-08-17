@@ -8,7 +8,7 @@ Once the app upgrade has shipped, work down this list and port each item
 deliberately. Every change below alters what questions students see, which is
 exactly why they were not made in `mathroot` directly.
 
-Baseline when copied: 24 tests passing. Now: 43 (Class 10 folded into the senior-variety test).
+Baseline when copied: 24 tests passing. Now: 45.
 
 ---
 
@@ -761,12 +761,31 @@ evaluated and compared, and every definite integral evaluated from its limits.
 | Class | Thin chapters before | After |
 |---|---|---|
 | 9 | 4 | **0** |
-| 10 | 6 | **2** |
+| 10 | 6 | **0** |
 | 11 | 8 | **0** |
 | 12 | 11 | **0** |
 
-The two left in Class 10 are Quadratic Equations and Circles, both at 3 shapes,
-which is thin rather than broken.
+**0 of 47 Class 9-12 chapters are thin.** The last two were Quadratic
+Equations and Circles:
+
+- `quadratic-formula` computed the discriminant and never used it for
+  anything. What it is FOR is deciding the nature of the roots without
+  solving - and the generator built every equation from two whole roots, so a
+  **negative discriminant was unreachable** and "no real roots" could never be
+  the answer. That case now has to be constructed deliberately. Also added
+  finding k for equal roots, which is the discriminant used as an equation
+  rather than as a number.
+- `quadratic-factorise` only solved by factorising. The relationship between
+  the roots and the coefficients - sum, product, and building the equation back
+  up from its roots - is half of what the chapter is for.
+- `circle-theorems` was two pieces of recall plus one angle. The Class 10
+  Circles chapter is almost entirely about tangents, so the length of a tangent
+  from an outside point and the angle between two tangents are in now.
+
+**Tests added:** `a quadratic sheet can show roots that are equal, distinct or
+absent`, which fails if the negative-discriminant case ever becomes unreachable
+again, and `a quadratic root really satisfies its own equation`, which
+substitutes every printed root back into its own printed equation.
 
 ## 22. Removed, not ported
 

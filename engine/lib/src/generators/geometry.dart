@@ -667,11 +667,65 @@ void registerGeometry() {
   });
 
   register('circle_theorems', (c) {
-    // Every level sees all three, on purpose. The first two are single facts
-    // with one question each in them, so holding them back for the easy levels
-    // left those levels with two questions in total - a twenty-question sheet
-    // came back with two. The level goes into the numbers below instead.
-    final which = c.pick(const ['semicircle', 'tangent', 'centre']);
+    // Every level sees all of these, on purpose. The recall ones are single
+    // facts with one question each in them, so holding them back for the easy
+    // levels left those levels with two questions in total - a twenty-question
+    // sheet came back with two. The level goes into the numbers instead.
+    //
+    // The Class 10 Circles chapter is almost entirely about tangents, and the
+    // three questions here were two pieces of recall plus one angle. The
+    // length of a tangent from an outside point, and the fact that two such
+    // tangents are equal, are what the chapter actually examines.
+    final which = c.pick(const [
+      'semicircle', 'tangent', 'centre', 'tangentlength', 'twotangents',
+    ]);
+    if (which == 'tangentlength') {
+      // Radius, tangent and the distance to the centre make a right-angled
+      // triangle, so a Pythagorean triple keeps the answer whole.
+      final t = c.pickByLevel(const [[3, 4, 5], [6, 8, 10], [5, 12, 13],
+        [8, 15, 17], [9, 12, 15]]);
+      return Question(
+        skillId: c.skillId,
+        prompt: 'A tangent is drawn to a circle of radius ${t[0]} cm from a '
+            'point ${t[2]} cm from the centre.\n\n'
+            'How long is the tangent, in cm?',
+        answer: '${t[1]}',
+        difficulty: c.difficulty,
+        choices: c.choicesAround(t[1],
+            distractors: [t[0], t[2], t[2] - t[0]]),
+        steps: [
+          'The tangent meets the radius at a right angle.',
+          'So radius, tangent and the line to the centre form a right-angled '
+              'triangle with the ${t[2]} cm as the hypotenuse.',
+          '${t[2]} x ${t[2]} - ${t[0]} x ${t[0]} = ${t[1] * t[1]}, and the '
+              'square root of ${t[1] * t[1]} is ${t[1]} cm.',
+        ],
+        hint: 'The radius to the point of contact is perpendicular to the '
+            'tangent.',
+      );
+    }
+    if (which == 'twotangents') {
+      // Two tangents from one external point are equal, and the angle between
+      // them plus the angle at the centre make 180.
+      final between = c.int_(3, c.band(9, 17)) * 5;
+      return Question(
+        skillId: c.skillId,
+        prompt: 'Two tangents are drawn to a circle from the same outside '
+            'point, and the angle between them is $between degrees.\n\n'
+            'What is the angle between the two radii at the centre?',
+        answer: '${180 - between}',
+        difficulty: c.difficulty,
+        choices: c.choicesAround(180 - between,
+            distractors: [between, 360 - between, 90]),
+        steps: [
+          'Each tangent meets its radius at 90 degrees.',
+          'The four angles of the shape add up to 360: '
+              '90 + 90 + $between + the centre angle.',
+          '360 - 90 - 90 - $between = ${180 - between} degrees.',
+        ],
+        hint: 'The two right angles use up 180 of the 360.',
+      );
+    }
     if (which == 'semicircle') {
       return Question(
         skillId: c.skillId,

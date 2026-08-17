@@ -333,6 +333,75 @@ void registerSenior() {
     }
     final lo = r1 <= r2 ? r1 : r2;
     final hi = r1 <= r2 ? r2 : r1;
+
+    // The discriminant was computed but never used for anything. What it is
+    // FOR is deciding the nature of the roots without solving - which is where
+    // most of the marks in this part of the chapter are, and it needs a
+    // negative discriminant, which this generator could never produce because
+    // it always built the equation from two whole roots.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        final kind = c.pickByLevel(const ['equal', 'distinct', 'none']);
+        // Built to order rather than derived, so a negative discriminant is
+        // actually reachable.
+        final m = c.int_(1, c.band(4, 9));
+        final (bb, ccc) = switch (kind) {
+          // (x - m)^2: discriminant exactly 0.
+          'equal' => (-2 * m, m * m),
+          // Two different whole roots.
+          'distinct' => (-(r1 + r2 + 1), r1 * (r2 + 1)),
+          // c large enough that b^2 - 4c drops below zero.
+          _ => (-2 * m, m * m + c.int_(1, c.band(2, 8))),
+        };
+        final dd = bb * bb - 4 * ccc;
+        final answer = dd == 0
+            ? 'equal'
+            : (dd > 0 ? 'distinct' : 'none');
+        return Question(
+          skillId: c.skillId,
+          prompt: 'Look at  ${term(1, 'x', power: 2)} '
+              '${bb < 0 ? '-' : '+'} ${term(bb.abs(), 'x')} + $ccc = 0\n\n'
+              'Without solving it, are the roots equal, distinct, or are there '
+              'no real roots? Answer equal, distinct or none.',
+          answer: answer,
+          difficulty: c.difficulty,
+          choices: const ['equal', 'distinct', 'none'],
+          steps: [
+            'Work out the discriminant, b^2 - 4ac.',
+            '(${bb})^2 - 4 x 1 x $ccc = ${bb * bb} - ${4 * ccc} = $dd.',
+            switch (answer) {
+              'equal' => 'It is exactly 0, so the roots are equal.',
+              'distinct' => 'It is positive, so there are two distinct real '
+                  'roots.',
+              _ => 'It is negative, so there are no real roots at all.',
+            },
+          ],
+          hint: 'Positive means two roots, zero means one, negative means '
+              'none.',
+        );
+      case 2:
+        // Find k for equal roots. The discriminant used as an equation rather
+        // than as a number, which is the harder half of the same idea.
+        final m = c.int_(2, c.band(5, 10));
+        return Question(
+          skillId: c.skillId,
+          prompt: 'For what value of k does  ${term(1, 'x', power: 2)} + '
+              '${term(2 * m, 'x')} + k = 0  have equal roots?',
+          answer: '${m * m}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(m * m,
+              distractors: [2 * m, m, 4 * m * m]),
+          steps: [
+            'Equal roots means the discriminant is 0.',
+            'b^2 - 4ac = ${2 * m}^2 - 4k = ${4 * m * m} - 4k.',
+            '${4 * m * m} - 4k = 0 gives k = ${m * m}.',
+          ],
+          hint: 'Set b^2 - 4ac to zero and solve for k.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Solve  x^2 ${b < 0 ? '-' : '+'} ${term(b.abs(), 'x')} + $cc = 0 '

@@ -637,6 +637,10 @@ void main() {
         'definite-integrals': 4,
         'derivative-applications': 4,
         'probability-events': 4,
+        // The last two Class 10 chapters.
+        'quadratic-factorise': 3,
+        'quadratic-formula': 4,
+        'circle-theorems': 5,
       };
       for (final entry in leastShapes.entries) {
         final shapes = <String>{};
@@ -652,6 +656,44 @@ void main() {
         expect(shapes.length, greaterThanOrEqualTo(entry.value),
             reason: '${entry.key} only asks ${shapes.length} kinds of '
                 'question:\n${shapes.join('\n')}');
+      }
+    });
+
+    test('a quadratic sheet can show roots that are equal, distinct or absent',
+        () {
+      // The discriminant was computed and never used for anything. What it is
+      // FOR is deciding the nature of the roots - and the generator built
+      // every equation from two whole roots, so a negative discriminant was
+      // unreachable and "no real roots" could never be the answer.
+      final outcomes = <String>{};
+      for (var d = 1; d <= 5; d++) {
+        for (var seed = 0; seed < 200; seed++) {
+          final q = generateQuestion(
+              skill: map['quadratic-formula'], difficulty: d, seed: seed);
+          if (!q.prompt.contains('Without solving')) continue;
+          outcomes.add(q.answer);
+        }
+      }
+      expect(outcomes, containsAll(['equal', 'distinct', 'none']),
+          reason: 'only saw $outcomes');
+    });
+
+    test('a quadratic root really satisfies its own equation', () {
+      for (var d = 1; d <= 5; d++) {
+        for (var seed = 0; seed < 120; seed++) {
+          final q = generateQuestion(
+              skill: map['quadratic-factorise'], difficulty: d, seed: seed);
+          final m = RegExp(r'x\^2 - (\d*)x \+ (\d+) = 0\n\nGive both roots')
+              .firstMatch(q.prompt);
+          if (m == null) continue;
+          final b = int.parse(m.group(1)!.isEmpty ? '1' : m.group(1)!);
+          final cc = int.parse(m.group(2)!);
+          for (final root in q.answer.split(',').map(int.parse)) {
+            expect(root * root - b * root + cc, 0,
+                reason: '${q.prompt} answers ${q.answer}, but $root is not a '
+                    'root');
+          }
+        }
       }
     });
 

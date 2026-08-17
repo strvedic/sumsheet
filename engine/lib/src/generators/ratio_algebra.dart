@@ -488,6 +488,55 @@ void registerRatioAlgebra() {
     final cc = r1 * r2;
     final lo = r1 <= r2 ? r1 : r2;
     final hi = r1 <= r2 ? r2 : r1;
+
+    // Solving by factorisation was the only question. The relationship between
+    // the roots and the coefficients is half of what the chapter is for, and
+    // building the equation back up from its roots is the standard two-marker
+    // that goes with it.
+    switch (c.variantByLevel(3)) {
+      case 1:
+        // Sum and product of the roots, read off the coefficients without
+        // solving anything - which is the whole point of knowing them.
+        final wantSum = c.coin();
+        return Question(
+          skillId: c.skillId,
+          prompt: 'For the equation  ${term(1, 'x', power: 2)} - '
+              '${term(b, 'x')} + $cc = 0,\n\n'
+              'what is the ${wantSum ? 'SUM' : 'PRODUCT'} of the roots?',
+          answer: '${wantSum ? b : cc}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(wantSum ? b : cc,
+              distractors: [wantSum ? cc : b, -b, r1]),
+          steps: [
+            'For x^2 + bx + c = 0 the roots add to -b and multiply to c.',
+            'Here b = ${-b} and c = $cc.',
+            wantSum
+                ? 'Sum of the roots = $b.'
+                : 'Product of the roots = $cc.',
+          ],
+          hint: 'You do not need to solve it - read it off the coefficients.',
+        );
+      case 2:
+        // Build the equation from its roots. The reverse direction, and where
+        // students put the signs the wrong way round.
+        return Question(
+          skillId: c.skillId,
+          prompt: 'A quadratic equation has roots $lo and $hi.\n\n'
+              'It can be written as  x^2 + px + q = 0.  What is p?',
+          answer: '${-b}',
+          difficulty: c.difficulty,
+          choices: c.choicesAround(-b, distractors: [b, cc, -cc]),
+          steps: [
+            'The equation is x^2 - (sum of roots)x + (product) = 0.',
+            'Sum = $lo + $hi = $b, so the x term is ${term(-b, 'x')}.',
+            'p = ${-b}.',
+          ],
+          hint: 'The sign of the sum flips when it goes into the equation.',
+        );
+      default:
+        break;
+    }
+
     return Question(
       skillId: c.skillId,
       prompt: 'Solve by factorisation:  x^2 - ${term(b, 'x')} + $cc = 0\n\n'
